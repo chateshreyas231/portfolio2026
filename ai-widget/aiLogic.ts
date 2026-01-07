@@ -513,6 +513,17 @@ export async function processMessage(
   // Handle based on intent
   switch (intent.type) {
     case 'SmallTalk':
+      // Use AI API for natural small talk instead of static responses
+      try {
+        const ragResult = retrieveRelevantInfo(userMessage.toLowerCase(), profile);
+        const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, ragResult.context, sessionId, topicHistory);
+        if (aiResponse && aiResponse.trim().length > 10) {
+          return aiResponse;
+        }
+      } catch (error) {
+        console.error('AI API error for small talk:', error);
+      }
+      // Fallback to static response only if AI fails
       return handleSmallTalk(userMessage);
     
     case 'SendResume':
@@ -525,19 +536,12 @@ export async function processMessage(
       );
     
     case 'AskAboutShreyas':
-      // Try direct answer first for speed
-      const directAnswer = answerAboutShreyas(intent, profile, conversationHistory);
-      
-      // If direct answer exists and is meaningful, return it immediately
-      if (directAnswer && directAnswer.trim().length > 10) {
-        return directAnswer;
-      }
-      
-      // Otherwise, use AI API with RAG context for comprehensive answers
+      // ALWAYS use AI API first for natural, conversational responses
       const userQuery = userMessage;
       const normalizedQuery = userQuery.toLowerCase().replace(/\b(he|his|him)\b/g, 'shreyas');
       const ragResult = retrieveRelevantInfo(normalizedQuery, profile);
       
+      // Try AI API first for natural conversation
       try {
         const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, ragResult.context, sessionId, topicHistory);
         if (aiResponse && aiResponse.trim().length > 10) {
@@ -547,34 +551,37 @@ export async function processMessage(
         console.error('AI API error:', error);
       }
       
-      // Fall back to direct answer or default message
-      return directAnswer || `I'd be happy to help! Could you be more specific? For example, you can ask about Mr. Shreyas Chate's background, education, work experience, projects, skills, or schedule a meeting. What would you like to know?`;
+      // Only fall back to direct answer if AI API fails
+      const directAnswer = answerAboutShreyas(intent, profile, conversationHistory);
+      if (directAnswer && directAnswer.trim().length > 10) {
+        return directAnswer;
+      }
+      
+      // Final fallback
+      return `I'd be happy to help! Could you be more specific? For example, you can ask about Mr. Shreyas Chate's background, education, work experience, projects, skills, or schedule a meeting. What would you like to know?`;
     
     case 'Unknown':
     default:
-      // Normalize query - replace he/his/him with Shreyas for better context
+      // ALWAYS try AI API first for natural conversation, even for unknown intents
       const normalizedQueryDefault = userMessage.toLowerCase().replace(/\b(he|his|him)\b/g, 'shreyas');
-      
-      // Use RAG to retrieve relevant information
       const ragResultDefault = retrieveRelevantInfo(normalizedQueryDefault, profile);
       
-      // Only try API if RAG found good context and user is clearly asking about Shreyas
-      if (ragResultDefault.confidence > 0.4 && (normalizedQueryDefault.includes('shreyas') || normalizedQueryDefault.includes('tell me') || normalizedQueryDefault.includes('what') || normalizedQueryDefault.includes('who'))) {
-        try {
-          const aiResponse = await Promise.race([
-            callAIAPI(userMessage, conversationHistory, useLocalAI, ragResultDefault.context, sessionId, topicHistory),
-            new Promise<string>((_, reject) => 
-              setTimeout(() => reject(new Error('Timeout')), 6000)
-            )
-          ]);
-          if (aiResponse && aiResponse.trim().length > 20) {
-            return aiResponse;
-          }
-        } catch (error) {
-          // Silently fall back on timeout or error
+      // Try AI API for all queries - let the AI handle the conversation naturally
+      try {
+        const aiResponse = await Promise.race([
+          callAIAPI(userMessage, conversationHistory, useLocalAI, ragResultDefault.context, sessionId, topicHistory),
+          new Promise<string>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 10000) // Increased timeout
+          )
+        ]);
+        if (aiResponse && aiResponse.trim().length > 10) {
+          return aiResponse;
         }
+      } catch (error) {
+        console.error('AI API error for unknown intent:', error);
       }
       
+      // Fallback only if AI completely fails
       return `I'd be happy to help! Could you be more specific? For example, you can ask about Mr. Shreyas Chate's background, education, work experience, projects, skills, or schedule a meeting. What would you like to know?`;
   }
 }
@@ -594,12 +601,12 @@ async function callAIAPI(
     // Keep more history for better context (increased from 2 to 10)
     const recentHistory = conversationHistory.slice(-10);
     
-    // Limit RAG context size for faster processing
-    const limitedRagContext = ragContext ? ragContext.substring(0, 500) : undefined;
+    // Increase RAG context for better responses
+    const limitedRagContext = ragContext ? ragContext.substring(0, 1000) : undefined;
     
     // Add timeout for faster failure
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for better reliability
     
     const response = await fetch('/api/ai', {
       method: 'POST',
@@ -609,7 +616,7 @@ async function callAIAPI(
       signal: controller.signal,
       body: JSON.stringify({
         userMessage,
-        history: recentHistory, // Increased history for better context
+        history: recentHistory, // Full conversation history for context
         useLocalAI,
         ragContext: limitedRagContext,
         sessionId: sessionId,
@@ -620,15 +627,26 @@ async function callAIAPI(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error('API request failed');
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error('AI API request failed:', response.status, errorText);
+      throw new Error(`API request failed: ${response.status}`);
     }
 
     const data = await response.json();
-    return data.reply || data.response || '';
+    const reply = data.reply || data.response || '';
+    
+    if (!reply || reply.trim().length === 0) {
+      throw new Error('Empty response from AI API');
+    }
+    
+    return reply;
   } catch (error: any) {
-    // Silently handle timeout and other errors
+    // Log error for debugging
+    console.error('callAIAPI error:', error);
+    
+    // Return empty to trigger fallback
     if (error.name === 'AbortError' || error.message === 'Timeout') {
-      return ''; // Return empty to trigger fallback
+      return '';
     }
     return '';
   }
