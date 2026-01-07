@@ -72,7 +72,7 @@ export const config = {
      * - public folder
      * Include .fbx files to handle them
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|glb|gltf)$).*)',
     // Also match .fbx files specifically
     '/(.*\\.fbx)',
   ],
