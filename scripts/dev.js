@@ -6,13 +6,23 @@
 const { spawn } = require('child_process');
 
 const nextDev = spawn('next', ['dev'], {
-  stdio: 'inherit',
   shell: true,
-  env: {
-    ...process.env,
-    // Suppress Next.js environment file logging
-    NEXT_PRIVATE_SKIP_ENV_FILE_LOG: '1',
-  },
+  stdio: ['inherit', 'pipe', 'pipe'],
+});
+
+// Filter stdout to remove "Environments:" line
+nextDev.stdout.on('data', (data) => {
+  const lines = data.toString().split('\n');
+  lines.forEach((line) => {
+    if (!line.includes('Environments:')) {
+      process.stdout.write(line + '\n');
+    }
+  });
+});
+
+// Pass stderr through
+nextDev.stderr.on('data', (data) => {
+  process.stderr.write(data);
 });
 
 nextDev.on('error', (error) => {
