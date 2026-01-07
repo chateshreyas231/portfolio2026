@@ -39,6 +39,10 @@ ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
 # Build the application
 RUN npm run build
 
+# Copy GLB files to static output for Firebase Hosting
+RUN mkdir -p .next/static/ai-widget && \
+    cp -r public/ai-widget/*.glb .next/static/ai-widget/ 2>/dev/null || true
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app

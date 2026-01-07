@@ -7,7 +7,7 @@
     "dev:clean": "next dev",
     "dev:prod": "npm run build && npm start",
     "build": "next build && npm run copy-glb-files",
-    "copy-glb-files": "mkdir -p .next/static/ai-widget && cp -r public/ai-widget/*.glb .next/static/ai-widget/ 2>/dev/null || true",
+    "copy-glb-files": "node -e \"const fs=require('fs');const path=require('path');const src='public/ai-widget';const dest='.next/static/ai-widget';if(fs.existsSync(src)){fs.mkdirSync(dest,{recursive:true});fs.readdirSync(src).forEach(f=>{if(f.endsWith('.glb')){fs.copyFileSync(path.join(src,f),path.join(dest,f));console.log('Copied:',f);}});}\"",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
