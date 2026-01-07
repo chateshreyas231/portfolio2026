@@ -50,9 +50,14 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Copy necessary files
-COPY --from=builder /app/public ./public
+# In standalone mode, Next.js creates a minimal server structure
+# We need to copy the standalone output, static files, and public folder
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+# Ensure public folder is accessible (standalone mode may need it at root)
+# The standalone server.js expects public at ./public relative to where server.js is
 
 USER nextjs
 
