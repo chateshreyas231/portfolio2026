@@ -49,10 +49,10 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
           },
-          // Performance headers
+          // Cache headers - allow updates for HTML/JS
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'public, max-age=0, must-revalidate'
           }
         ],
       },

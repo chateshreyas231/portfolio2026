@@ -526,9 +526,11 @@ jobs:
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            if firebase deploy --only hosting --non-interactive; then
+            # Force deploy to clear cache
+            if firebase deploy --only hosting --non-interactive --force; then
               echo "✅ Firebase Hosting deployment successful"
               echo "🌐 Firebase Hosting is now proxying to Cloud Run service"
+              echo "🔄 Cache cleared - new version should be live"
               break
             else
               RETRY_COUNT=$((RETRY_COUNT + 1))
