@@ -9,7 +9,7 @@ import * as THREE from 'three';
 if (typeof window !== 'undefined') {
   // Override Three.js FBXLoader to suppress errors
   const originalError = console.error;
-  console.error = function(...args: any[]) {
+  console.error = function(...args: unknown[]) {
     const message = args.join(' ');
     if (message.includes('.fbx') || message.includes('Talking1') || message.includes('Waving') || message.includes('Could not load')) {
       console.warn('Suppressed FBX error (likely cached reference):', message);
@@ -21,18 +21,31 @@ if (typeof window !== 'undefined') {
 
 type ScreenPoint = { x: number; y: number };
 
+// List of GLB models to rotate through
+const GLB_MODELS = [
+  '/ai-widget/Waving.glb',
+  '/ai-widget/Talking (1).glb',
+  '/ai-widget/Swing Dancing.glb',
+  '/ai-widget/Silly Dancing.glb',
+  '/ai-widget/Reaction.glb',
+  '/ai-widget/Quick Formal Bow.glb',
+  '/ai_robot.glb', // Fallback to original
+];
+
 // Note: Preload is handled by useGLTF hook automatically
 
 // Load the GLB model
 function RobotModel({
   mousePosition: _mousePosition,
   robotScreenPosition: _robotScreenPosition,
+  modelPath,
 }: {
   mousePosition?: ScreenPoint;
   robotScreenPosition?: ScreenPoint;
+  modelPath: string;
 }) {
   // Load the GLB model - path is relative to public folder
-  const gltf = useGLTF('/ai_robot.glb');
+  const gltf = useGLTF(modelPath);
   const scene = gltf.scene;
   const robotRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Object3D | null>(null);
@@ -51,7 +64,6 @@ function RobotModel({
     // Calculate bounding box
     const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
     
     // Store initial viewport height once
     if (initialViewportHeightRef.current === null) {
@@ -147,9 +159,11 @@ function RobotModel({
 function RobotScene({
   mousePosition,
   robotScreenPosition,
+  modelPath,
 }: {
   mousePosition: ScreenPoint;
   robotScreenPosition: ScreenPoint;
+  modelPath: string;
 }) {
   return (
     <>
@@ -157,6 +171,7 @@ function RobotScene({
       <RobotModel
         mousePosition={mousePosition}
         robotScreenPosition={robotScreenPosition}
+        modelPath={modelPath}
       />
 
       {/* Optimized lighting - reduced lights for performance */}
@@ -178,6 +193,7 @@ function RobotScene({
 // --------- Exported component with mouse tracking ---------
 export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
   const [mounted, setMounted] = useState(false);
+  const [currentModelIndex, setCurrentModelIndex] = useState(0);
   const [mousePosition, setMousePosition] = useState<ScreenPoint>({
     x: 0,
     y: 0,
@@ -189,6 +205,7 @@ export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
   });
 
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const rotationIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -197,7 +214,27 @@ export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
         x: window.innerWidth / 2,
         y: window.innerHeight / 2,
       });
+
+      // Preload all models for smoother transitions
+      GLB_MODELS.forEach((model) => {
+        try {
+          useGLTF.preload(model);
+        } catch {
+          // Ignore preload errors
+        }
+      });
     }
+
+    // Rotate through models every 5 seconds
+    rotationIntervalRef.current = setInterval(() => {
+      setCurrentModelIndex((prev) => (prev + 1) % GLB_MODELS.length);
+    }, 5000); // Change model every 5 seconds
+
+    return () => {
+      if (rotationIntervalRef.current) {
+        clearInterval(rotationIntervalRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -255,7 +292,7 @@ export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
       onClick={onClick}
     >
       <Canvas
-        key="airobot-canvas"
+        key={`airobot-canvas-${currentModelIndex}`}
         camera={{ position: [0, 0.5, 4], fov: 50 }}
         dpr={[0.5, 1]}
         performance={{ min: 0.3, max: 0.8 }}
@@ -285,7 +322,7 @@ export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
             gl.setPixelRatio(Math.min(window.devicePixelRatio, 1));
             gl.shadowMap.enabled = false;
             gl.setClearColor(0x000000, 0);
-            gl.physicallyCorrectLights = false;
+            // Note: physicallyCorrectLights is not a standard WebGLRenderer property
             gl.toneMapping = THREE.NoToneMapping;
           } catch (error) {
             console.warn('Canvas initialization error:', error);
@@ -301,6 +338,7 @@ export default function AIRobot3D({ onClick }: { onClick?: () => void }) {
           <RobotScene
             mousePosition={mousePosition}
             robotScreenPosition={robotScreenPosition}
+            modelPath={GLB_MODELS[currentModelIndex]}
           />
         </Suspense>
       </Canvas>
