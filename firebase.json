@@ -8,10 +8,6 @@
     ],
     "rewrites": [
       {
-        "source": "/ai-widget/**",
-        "destination": "/ai-widget/**"
-      },
-      {
         "source": "**",
         "run": {
           "serviceId": "portfolio-app",
