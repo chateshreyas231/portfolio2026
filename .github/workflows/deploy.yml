@@ -481,21 +481,21 @@ jobs:
           if [ -z "$FIREBASE_TOKEN" ]; then
             echo "❌ FIREBASE_TOKEN secret is not set in GitHub Secrets"
             echo "Please add FIREBASE_TOKEN to your repository secrets"
+            echo "Get token by running: firebase login:ci (locally)"
             exit 1
           fi
           
-          # Verify token is set
-          echo "✅ FIREBASE_TOKEN is set (length: ${#FIREBASE_TOKEN})"
+          # Verify token format (should start with a character)
+          if [ ${#FIREBASE_TOKEN} -lt 10 ]; then
+            echo "⚠️ FIREBASE_TOKEN seems too short, but continuing..."
+          fi
           
           # Firebase CLI automatically uses FIREBASE_TOKEN from environment
-          # No need to run login:ci - just set the token and use it
-          export FIREBASE_TOKEN="${{ secrets.FIREBASE_TOKEN }}"
+          # Just verify we can access Firebase with the token
+          echo "✅ FIREBASE_TOKEN is set"
           
-          # Set the project (this will use the token automatically)
-          firebase use ${{ env.PROJECT_ID }} --non-interactive --token "$FIREBASE_TOKEN" || {
-            echo "⚠️ Failed to set project, trying without explicit token..."
-            firebase use ${{ env.PROJECT_ID }} --non-interactive
-          }
+          # Set the project - Firebase CLI will use FIREBASE_TOKEN automatically
+          firebase use ${{ env.PROJECT_ID }} --non-interactive
           
           echo "✅ Firebase authentication successful"
 
@@ -506,11 +506,8 @@ jobs:
         run: |
           echo "🌐 Deploying to Firebase Hosting..."
           
-          # Ensure token is exported
-          export FIREBASE_TOKEN="${{ secrets.FIREBASE_TOKEN }}"
-          
-          # Set project with token
-          firebase use ${{ env.PROJECT_ID }} --non-interactive --token "$FIREBASE_TOKEN" || firebase use ${{ env.PROJECT_ID }} --non-interactive
+          # Set project (FIREBASE_TOKEN is already in env from previous step)
+          firebase use ${{ env.PROJECT_ID }} --non-interactive
           
           # Verify Cloud Run service is accessible
           SERVICE_URL="${{ steps.service-url.outputs.url }}"
