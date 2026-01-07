@@ -159,8 +159,8 @@ body.glass-theme .ai-widget-spline-error {
 
 @media (max-width: 640px) {
   .ai-widget-spline-button {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     bottom: 1rem;
     right: 1rem;
   }
