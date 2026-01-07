@@ -162,6 +162,12 @@ IP: ${userIp}
         });
 
         if (emailResult.error) {
+          // Log detailed error for debugging
+          logError(emailResult.error, { 
+            context: 'Resend API Error',
+            resendErrorCode: emailResult.error.name,
+            resendErrorMessage: emailResult.error.message
+          });
           throw new Error(emailResult.error.message || 'Failed to send email');
         }
 
@@ -209,12 +215,32 @@ IP: ${userIp}
           message: 'Your message has been sent successfully! I\'ll get back to you soon.',
         });
 
-      } catch (resendError) {
-        logError(resendError, { context: 'Resend Direct Error' });
+      } catch (resendError: any) {
+        // Enhanced error logging
+        const errorDetails = {
+          context: 'Resend Direct Error',
+          hasApiKey: !!RESEND_API_KEY,
+          apiKeyLength: RESEND_API_KEY ? RESEND_API_KEY.length : 0,
+          fromEmail: FROM_EMAIL,
+          contactEmail: CONTACT_EMAIL,
+          errorMessage: resendError?.message,
+          errorName: resendError?.name,
+          errorStack: resendError?.stack?.substring(0, 500),
+        };
+        logError(resendError, errorDetails);
+        
+        // Provide more helpful error message
+        let userMessage = 'Failed to send email. Please try again or contact directly at connect@shreyaschate.dev';
+        if (resendError?.message?.includes('domain')) {
+          userMessage = 'Email service configuration error. Please contact directly at connect@shreyaschate.dev';
+        } else if (resendError?.message?.includes('API key') || resendError?.message?.includes('Unauthorized')) {
+          userMessage = 'Email service authentication error. Please contact directly at connect@shreyaschate.dev';
+        }
+        
         return NextResponse.json(
           {
             success: false,
-            error: 'Failed to send email. Please try again or contact directly at connect@shreyaschate.dev'
+            error: userMessage
           },
           { status: 500 }
         );
@@ -223,6 +249,12 @@ IP: ${userIp}
 
     // If neither service is available
     if (!resend) {
+      logError(new Error('Resend not initialized'), { 
+        context: 'Resend Not Configured',
+        hasApiKey: !!RESEND_API_KEY,
+        fromEmail: FROM_EMAIL,
+        contactEmail: CONTACT_EMAIL
+      });
       return NextResponse.json(
         {
           success: false,
