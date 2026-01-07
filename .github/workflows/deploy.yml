@@ -281,7 +281,7 @@ jobs:
               if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 echo "⚠️ Push failed, retrying in 10 seconds ($RETRY_COUNT/$MAX_RETRIES)..."
                 echo "Re-authenticating Docker..."
-                gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin ${{ env.ARTIFACT_REGISTRY }}
+                gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin $REGISTRY
                 sleep 10
               else
                 echo "❌ Push failed after $MAX_RETRIES attempts"
@@ -323,13 +323,30 @@ jobs:
         id: deploy-cloud-run
         run: |
           echo "🚀 Deploying to Cloud Run..."
-          IMAGE_TAG="${{ steps.build-image.outputs.image }}"
           
-          # Check if service exists
+          # Get the correct registry URI
+          REGISTRY="${{ steps.verify-repo.outputs.registry }}"
+          if [ -z "$REGISTRY" ]; then
+            REGISTRY="${{ env.REGION }}-docker.pkg.dev"
+          fi
+          
+          # Build the correct image tag using Artifact Registry
+          IMAGE_TAG="$REGISTRY/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          
+          echo "Deploying image: $IMAGE_TAG"
+          echo "Registry: $REGISTRY"
+          
+          # Check if service exists and what image it's currently using
           if gcloud run services describe ${{ env.SERVICE_NAME }} \
             --region=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }} 2>/dev/null; then
-            echo "📝 Service exists, updating..."
+            echo "📝 Service exists, checking current configuration..."
+            
+            CURRENT_IMAGE=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --format='value(spec.template.spec.containers[0].image)')
+            echo "Current image: $CURRENT_IMAGE"
             
             # Remove PORT env var if it exists (Cloud Run sets this automatically)
             gcloud run services update ${{ env.SERVICE_NAME }} \
@@ -337,6 +354,13 @@ jobs:
               --project=${{ env.PROJECT_ID }} \
               --remove-env-vars PORT \
               --quiet 2>/dev/null || echo "⚠️ PORT removal attempted (may not exist)"
+            
+            # Remove RESEND_API_KEY from env vars if it exists (we'll use secrets instead)
+            gcloud run services update ${{ env.SERVICE_NAME }} \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --remove-env-vars RESEND_API_KEY \
+              --quiet 2>/dev/null || echo "⚠️ RESEND_API_KEY removal attempted (may not exist)"
           else
             echo "📝 Service does not exist, will create new service"
           fi
@@ -346,6 +370,8 @@ jobs:
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Deployment attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES..."
+            
             if gcloud run deploy ${{ env.SERVICE_NAME }} \
               --image "$IMAGE_TAG" \
               --platform managed \
@@ -362,11 +388,31 @@ jobs:
               --port 8080 \
               --quiet; then
               echo "✅ Cloud Run deployment successful"
+              
+              # Verify the deployed image
+              DEPLOYED_IMAGE=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+                --region=${{ env.REGION }} \
+                --project=${{ env.PROJECT_ID }} \
+                --format='value(spec.template.spec.containers[0].image)')
+              echo "✅ Deployed image: $DEPLOYED_IMAGE"
+              
+              # Verify RESEND_API_KEY is using secrets, not env vars
+              ENV_VARS=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+                --region=${{ env.REGION }} \
+                --project=${{ env.PROJECT_ID }} \
+                --format='value(spec.template.spec.containers[0].env[].name)' | grep -i resend || echo "none")
+              
+              if [ "$ENV_VARS" != "none" ]; then
+                echo "⚠️ WARNING: RESEND_API_KEY found in environment variables. Should use secrets!"
+              else
+                echo "✅ RESEND_API_KEY is using Secret Manager (secure)"
+              fi
+              
               break
             else
               RETRY_COUNT=$((RETRY_COUNT + 1))
               if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "⚠️ Deployment failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+                echo "⚠️ Deployment failed, retrying in 10 seconds ($RETRY_COUNT/$MAX_RETRIES)..."
                 sleep 10
               else
                 echo "❌ Deployment failed after $MAX_RETRIES attempts"
