@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini-tts',
+        model: 'tts-1', // ✅ Fixed: Use tts-1 (or tts-1-hd for higher quality)
         input: text,
         voice: voice, // alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse
         speed: Math.max(0.25, Math.min(4.0, speed)), // Clamp between 0.25 and 4.0

@@ -26,12 +26,13 @@ export async function POST(request: NextRequest) {
       type: audioFile.type || 'audio/webm',
     });
 
-    // Create FormData for OpenAI
+    // Create FormData for OpenAI Whisper API
     const openAIFormData = new FormData();
     openAIFormData.append('file', audioBlob, audioFile.name || 'audio.webm');
-    openAIFormData.append('model', 'gpt-4o-transcribe');
+    openAIFormData.append('model', 'whisper-1'); // ✅ Fixed: Use whisper-1
     openAIFormData.append('language', 'en');
     openAIFormData.append('response_format', 'json');
+    openAIFormData.append('temperature', '0'); // More deterministic
 
     // Call OpenAI Transcription API
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {

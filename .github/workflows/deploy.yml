@@ -383,7 +383,7 @@ jobs:
               --memory 2Gi \
               --cpu 2 \
               --timeout 300 \
-              --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
+              --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
               --update-secrets "RESEND_API_KEY=resend-api-key:latest" \
               --port 8080 \
               --quiet; then

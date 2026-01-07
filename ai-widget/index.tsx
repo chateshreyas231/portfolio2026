@@ -29,9 +29,11 @@ export default function AIWidget() {
   const [sessionId, setSessionId] = useState<string>(''); // Session ID for conversation tracking
   const [micPermissionError, setMicPermissionError] = useState<string | null>(null); // Track mic permission errors
   const [showPopupMessage, setShowPopupMessage] = useState(false); // Show popup message every 2 minutes
+  const [topicHistory, setTopicHistory] = useState<string[]>([]); // Track topics discussed for progressive disclosure
   const conversationStartTimeRef = useRef<Date | null>(null);
   const hasSavedConversationRef = useRef(false);
   const messagesForSaveRef = useRef<Message[]>([]);
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null); // 10-minute session timeout
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -136,6 +138,18 @@ export default function AIWidget() {
       setSessionId(newSessionId);
       conversationStartTimeRef.current = new Date();
       hasSavedConversationRef.current = false; // Reset save flag for new conversation
+      setTopicHistory([]); // Reset topic history for new session
+      
+      // Set 10-minute session timeout
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+      sessionTimeoutRef.current = setTimeout(() => {
+        if (isOpen) {
+          // Save conversation before closing
+          saveConversationAndClose();
+        }
+      }, 10 * 60 * 1000); // 10 minutes
       
       const greeting = getInitialGreeting();
       const greetingMessage: Message = {
@@ -178,6 +192,9 @@ export default function AIWidget() {
       if (idleTimeoutRef.current) {
         clearTimeout(idleTimeoutRef.current);
       }
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
     };
   }, [isOpen, profileData, continuousListening, messages.length, isListening, isSpeaking]);
 
@@ -203,39 +220,27 @@ export default function AIWidget() {
       
       // Save conversation and transcript to Firebase
       const endTime = new Date();
-      const duration = Math.floor((endTime.getTime() - conversationStartTimeRef.current.getTime()) / 1000);
       const messagesToSave = messagesForSaveRef.current;
-      
-      const conversation = {
-        sessionId,
-        messages: messagesToSave.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          timestamp: new Date(),
-        })),
-        startedAt: conversationStartTimeRef.current,
-        endedAt: endTime,
-        duration,
-        messageCount: messagesToSave.length,
-        userAgent: typeof window !== 'undefined' && typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-        createdAt: conversationStartTimeRef.current,
-        updatedAt: endTime,
-      };
-      
-      const transcript = {
-        conversationId: sessionId,
-        sessionId,
-        fullTranscript: messagesToSave.map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n\n'),
-        messageCount: messagesToSave.length,
-        createdAt: endTime,
-      };
       
       // Save to Firebase (non-blocking) - only on client side
       if (typeof window !== 'undefined') {
-        fetch('/api/conversations', {
+        fetch('/api/conversations/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ conversation, transcript }),
+          body: JSON.stringify({
+            sessionId,
+            messages: messagesToSave.map(msg => ({
+              role: msg.role,
+              content: msg.content,
+              timestamp: new Date().toISOString(),
+            })),
+            startedAt: conversationStartTimeRef.current.toISOString(),
+            endedAt: endTime.toISOString(),
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+            metadata: {
+              topics: topicHistory,
+            },
+          }),
         })
           .then(async (res) => {
             if (!res.ok) {
@@ -251,7 +256,7 @@ export default function AIWidget() {
           .catch(err => console.error('Failed to save conversation:', err));
       }
     }
-  }, [isOpen, sessionId]);
+  }, [isOpen, sessionId, topicHistory]);
 
   // Stop all conversation activity when chat closes (cleanup)
   useEffect(() => {
@@ -276,9 +281,16 @@ export default function AIWidget() {
       // Clear messages and session
       setMessages([]);
       setSessionId('');
+      setTopicHistory([]);
       conversationStartTimeRef.current = null;
       hasSavedConversationRef.current = false;
       messagesForSaveRef.current = [];
+      
+      // Clear session timeout
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+        sessionTimeoutRef.current = null;
+      }
     }
   }, [isOpen, stopListening]);
 
@@ -780,12 +792,18 @@ export default function AIWidget() {
     setIsLoading(true);
 
     try {
+      // Extract topics from conversation for progressive disclosure
+      const topics = extractTopicsFromConversation(updatedMessages);
+      setTopicHistory(topics);
+      
       // Pass updated messages (including the new user message) for proper context
       const response = await processMessage(
         messageText,
         updatedMessages, // Use updated messages with the new user message
         profileData,
-        false // Set to true to use Ollama
+        false, // Set to true to use Ollama
+        sessionId,
+        topics
       );
       
       // Ensure we have a valid response
@@ -830,6 +848,78 @@ export default function AIWidget() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Extract topics from conversation for progressive disclosure
+  const extractTopicsFromConversation = (messages: Message[]): string[] => {
+    const topics: string[] = [];
+    const topicKeywords: { [key: string]: string[] } = {
+      'education': ['education', 'degree', 'university', 'school', 'gpa', 'academic', 'masters', 'bachelors'],
+      'experience': ['experience', 'work', 'job', 'company', 'role', 'position', 'career'],
+      'projects': ['project', 'built', 'developed', 'created', 'application', 'system'],
+      'skills': ['skill', 'technology', 'tech', 'expertise', 'proficient', 'language', 'framework'],
+      'achievements': ['achievement', 'award', 'certification', 'recognition', 'winner'],
+      'contact': ['contact', 'email', 'phone', 'reach', 'linkedin', 'github', 'connect'],
+      'background': ['background', 'about', 'who', 'introduction', 'summary'],
+    };
+
+    messages.forEach(msg => {
+      if (msg.role === 'user') {
+        const lowerContent = msg.content.toLowerCase();
+        Object.entries(topicKeywords).forEach(([topic, keywords]) => {
+          if (keywords.some(keyword => lowerContent.includes(keyword)) && !topics.includes(topic)) {
+            topics.push(topic);
+          }
+        });
+      }
+    });
+
+    return topics;
+  };
+
+  // Save conversation and close session
+  const saveConversationAndClose = async () => {
+    if (!sessionId || messagesForSaveRef.current.length === 0 || !conversationStartTimeRef.current || hasSavedConversationRef.current) {
+      setIsOpen(false);
+      return;
+    }
+
+    hasSavedConversationRef.current = true;
+    const endTime = new Date();
+
+    try {
+      await fetch('/api/conversations/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          messages: messagesForSaveRef.current.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date().toISOString(),
+          })),
+          startedAt: conversationStartTimeRef.current.toISOString(),
+          endedAt: endTime.toISOString(),
+          userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+          metadata: {
+            topics: topicHistory,
+          },
+        }),
+      });
+    } catch (err) {
+      console.error('Failed to save conversation:', err);
+    }
+
+    // Show closing message
+    const closingMessage: Message = {
+      role: 'assistant',
+      content: 'Our conversation session has ended. Feel free to start a new conversation anytime! 👋'
+    };
+    setMessages(prev => [...prev, closingMessage]);
+    
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 2000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {

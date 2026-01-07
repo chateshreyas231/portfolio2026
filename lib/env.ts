@@ -10,6 +10,7 @@ const requiredEnvVars = {
   
   // Optional but recommended
   OPENAI_API_KEY: process.env.OPENAI_API_KEY, // Optional - AI widget can work without it
+  GROQ_API_KEY: process.env.GROQ_API_KEY, // Optional - AI widget can work without it
 } as const;
 
 // Optional environment variables (not required for basic functionality)
@@ -41,7 +42,7 @@ export function validateEnv() {
 /**
  * Get environment variable with validation
  */
-export function getEnvVar(key: keyof typeof requiredEnvVars | 'USE_OLLAMA' | 'OLLAMA_URL' | 'FIREBASE_SERVICE_ACCOUNT_KEY'): string {
+export function getEnvVar(key: keyof typeof requiredEnvVars | 'USE_OLLAMA' | 'OLLAMA_URL' | 'FIREBASE_SERVICE_ACCOUNT_KEY' | 'GROQ_API_KEY'): string {
   const value = process.env[key];
   if (!value && key in requiredEnvVars) {
     throw new Error(`Required environment variable ${key} is not set`);

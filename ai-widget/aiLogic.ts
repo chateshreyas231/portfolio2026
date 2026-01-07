@@ -503,7 +503,9 @@ export async function processMessage(
   userMessage: string,
   conversationHistory: Message[],
   profile: ProfileData,
-  useLocalAI: boolean = false
+  useLocalAI: boolean = false,
+  sessionId?: string,
+  topicHistory?: string[]
 ): Promise<string> {
   // Detect intent
   const intent = detectIntent(userMessage);
@@ -537,7 +539,7 @@ export async function processMessage(
       const ragResult = retrieveRelevantInfo(normalizedQuery, profile);
       
       try {
-        const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, ragResult.context);
+        const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, ragResult.context, sessionId, topicHistory);
         if (aiResponse && aiResponse.trim().length > 10) {
           return aiResponse;
         }
@@ -560,7 +562,7 @@ export async function processMessage(
       if (ragResultDefault.confidence > 0.4 && (normalizedQueryDefault.includes('shreyas') || normalizedQueryDefault.includes('tell me') || normalizedQueryDefault.includes('what') || normalizedQueryDefault.includes('who'))) {
         try {
           const aiResponse = await Promise.race([
-            callAIAPI(userMessage, conversationHistory, useLocalAI, ragResultDefault.context),
+            callAIAPI(userMessage, conversationHistory, useLocalAI, ragResultDefault.context, sessionId, topicHistory),
             new Promise<string>((_, reject) => 
               setTimeout(() => reject(new Error('Timeout')), 6000)
             )
@@ -578,24 +580,26 @@ export async function processMessage(
 }
 
 /**
- * Call AI API (Ollama or OpenAI) with RAG context
+ * Call AI API (Groq, Ollama, or OpenAI) with RAG context
  */
 async function callAIAPI(
   userMessage: string,
   conversationHistory: Message[],
   useLocalAI: boolean,
-  ragContext?: string
+  ragContext?: string,
+  sessionId?: string,
+  topicHistory?: string[]
 ): Promise<string> {
   try {
-    // Optimized: Limit history to last 2 messages for speed
-    const recentHistory = conversationHistory.slice(-2);
+    // Keep more history for better context (increased from 2 to 10)
+    const recentHistory = conversationHistory.slice(-10);
     
     // Limit RAG context size for faster processing
-    const limitedRagContext = ragContext ? ragContext.substring(0, 250) : undefined;
+    const limitedRagContext = ragContext ? ragContext.substring(0, 500) : undefined;
     
     // Add timeout for faster failure
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
     const response = await fetch('/api/ai', {
       method: 'POST',
@@ -605,9 +609,11 @@ async function callAIAPI(
       signal: controller.signal,
       body: JSON.stringify({
         userMessage,
-        history: recentHistory, // Reduced history for speed
+        history: recentHistory, // Increased history for better context
         useLocalAI,
-        ragContext: limitedRagContext // Limited RAG context for speed
+        ragContext: limitedRagContext,
+        sessionId: sessionId,
+        topicHistory: topicHistory || []
       }),
     });
     
