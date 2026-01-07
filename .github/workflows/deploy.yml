@@ -75,30 +75,75 @@ jobs:
         id: create-repo
         run: |
           echo "📦 Checking Artifact Registry repository..."
-          if gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+          set +e  # Don't exit on error for the check
+          REPO_EXISTS=$(gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
             --location=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+            --project=${{ env.PROJECT_ID }} 2>&1)
+          REPO_CHECK_EXIT=$?
+          set -e  # Exit on error again
+          
+          if [ $REPO_CHECK_EXIT -eq 0 ]; then
             echo "✅ Repository already exists"
+            echo "$REPO_EXISTS"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "📦 Creating Artifact Registry repository..."
-            gcloud artifacts repositories create ${{ env.SERVICE_NAME }} \
+            echo "📦 Repository does not exist. Creating Artifact Registry repository..."
+            echo "Repository name: ${{ env.SERVICE_NAME }}"
+            echo "Location: ${{ env.REGION }}"
+            echo "Project: ${{ env.PROJECT_ID }}"
+            
+            # Create repository with explicit error handling
+            if gcloud artifacts repositories create ${{ env.SERVICE_NAME }} \
               --repository-format=docker \
               --location=${{ env.REGION }} \
               --project=${{ env.PROJECT_ID }} \
-              --description="Docker repository for portfolio app" \
-              --quiet
-            echo "✅ Repository created successfully"
-            echo "exists=false" >> $GITHUB_OUTPUT
+              --description="Docker repository for portfolio app"; then
+              echo "✅ Repository created successfully"
+              echo "exists=false" >> $GITHUB_OUTPUT
+            else
+              echo "❌ Failed to create repository"
+              echo "Checking if repository was created by another process..."
+              sleep 5
+              # Check again after a short wait
+              if gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+                --location=${{ env.REGION }} \
+                --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+                echo "✅ Repository exists now (may have been created concurrently)"
+                echo "exists=true" >> $GITHUB_OUTPUT
+              else
+                echo "❌ Repository creation failed and repository does not exist"
+                exit 1
+              fi
+            fi
           fi
 
       - name: Verify Artifact Registry repository
         run: |
           echo "🔍 Verifying repository access..."
-          gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
-            --location=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }}
-          echo "✅ Repository verified"
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+              --location=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+              echo "✅ Repository verified and accessible"
+              gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+                --location=${{ env.REGION }} \
+                --project=${{ env.PROJECT_ID }}
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⏳ Repository not accessible yet, waiting... ($RETRY_COUNT/$MAX_RETRIES)"
+                sleep 5
+              else
+                echo "❌ Repository verification failed after $MAX_RETRIES attempts"
+                echo "Repository may not exist or service account lacks permissions"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Configure Docker for Artifact Registry
         run: |
@@ -120,6 +165,26 @@ jobs:
           echo "latest=$LATEST_TAG" >> $GITHUB_OUTPUT
           echo "✅ Docker image built successfully"
 
+      - name: Verify repository before push
+        run: |
+          echo "🔍 Final verification of repository before push..."
+          REPO_NAME="${{ env.SERVICE_NAME }}"
+          REPO_PATH="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/$REPO_NAME/$REPO_NAME"
+          
+          echo "Repository path: $REPO_PATH"
+          
+          # Verify repository exists
+          if ! gcloud artifacts repositories describe $REPO_NAME \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+            echo "❌ Repository $REPO_NAME does not exist!"
+            echo "Attempting to list all repositories..."
+            gcloud artifacts repositories list --location=${{ env.REGION }} --project=${{ env.PROJECT_ID }} || true
+            exit 1
+          fi
+          
+          echo "✅ Repository confirmed to exist"
+
       - name: Push Docker image to Artifact Registry
         id: push-image
         run: |
@@ -127,21 +192,36 @@ jobs:
           IMAGE_TAG="${{ steps.build-image.outputs.image }}"
           LATEST_TAG="${{ steps.build-image.outputs.latest }}"
           
+          echo "Pushing image: $IMAGE_TAG"
+          echo "Pushing latest: $LATEST_TAG"
+          
+          # Verify Docker is authenticated
+          echo "🔐 Verifying Docker authentication..."
+          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin ${{ env.ARTIFACT_REGISTRY }}
+          
           # Push with retry logic
           MAX_RETRIES=3
           RETRY_COUNT=0
           
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1)) of $MAX_RETRIES..."
+            
             if docker push "$IMAGE_TAG" && docker push "$LATEST_TAG"; then
               echo "✅ Images pushed successfully"
               break
             else
               RETRY_COUNT=$((RETRY_COUNT + 1))
               if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                echo "⚠️ Push failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
-                sleep 5
+                echo "⚠️ Push failed, retrying in 10 seconds ($RETRY_COUNT/$MAX_RETRIES)..."
+                echo "Re-authenticating Docker..."
+                gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin ${{ env.ARTIFACT_REGISTRY }}
+                sleep 10
               else
                 echo "❌ Push failed after $MAX_RETRIES attempts"
+                echo "Checking repository status..."
+                gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+                  --location=${{ env.REGION }} \
+                  --project=${{ env.PROJECT_ID }} || echo "Repository check failed"
                 exit 1
               fi
             fi
