@@ -10,7 +10,8 @@ env:
   PROJECT_ID: portfolio2024-b95ee
   REGION: us-central1
   SERVICE_NAME: portfolio-app
-  ARTIFACT_REGISTRY: us-docker.pkg.dev
+  # Artifact Registry format: {REGION}-docker.pkg.dev
+  ARTIFACT_REGISTRY: us-central1-docker.pkg.dev
 
 jobs:
   deploy:
@@ -162,16 +163,46 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: |
           echo "🐳 Configuring Docker authentication..."
-          gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
-          echo "✅ Docker configured"
+          # Get the actual registry URI from the repository
+          REGISTRY_URI=$(gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(name)' 2>/dev/null | sed 's|projects/.*/locations/\(.*\)/repositories/.*|\1-docker.pkg.dev|' || echo "${{ env.REGION }}-docker.pkg.dev")
+          
+          if [ -z "$REGISTRY_URI" ] || [ "$REGISTRY_URI" == "docker.pkg.dev" ]; then
+            REGISTRY_URI="${{ env.REGION }}-docker.pkg.dev"
+          fi
+          
+          echo "Configuring Docker for: $REGISTRY_URI"
+          gcloud auth configure-docker $REGISTRY_URI --quiet
+          echo "✅ Docker configured for $REGISTRY_URI"
+
+      - name: Get Artifact Registry URI
+        id: get-registry-uri
+        run: |
+          echo "🔍 Getting Artifact Registry URI..."
+          REGISTRY_URI=$(gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(name)' 2>/dev/null | sed 's|projects/.*/locations/\(.*\)/repositories/.*|\1-docker.pkg.dev|' || echo "${{ env.REGION }}-docker.pkg.dev")
+          
+          # Fallback to region-based format if URI extraction fails
+          if [ -z "$REGISTRY_URI" ] || [ "$REGISTRY_URI" == "docker.pkg.dev" ]; then
+            REGISTRY_URI="${{ env.REGION }}-docker.pkg.dev"
+          fi
+          
+          echo "registry=$REGISTRY_URI" >> $GITHUB_OUTPUT
+          echo "✅ Registry URI: $REGISTRY_URI"
 
       - name: Build Docker image
         id: build-image
         run: |
           echo "🔨 Building Docker image..."
-          IMAGE_TAG="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
-          LATEST_TAG="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest"
+          REGISTRY="${{ steps.get-registry-uri.outputs.registry }}"
+          IMAGE_TAG="$REGISTRY/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          LATEST_TAG="$REGISTRY/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest"
           
+          echo "Registry: $REGISTRY"
           echo "Building image: $IMAGE_TAG"
           docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
           
@@ -180,11 +211,24 @@ jobs:
           echo "✅ Docker image built successfully"
 
       - name: Verify repository before push
+        id: verify-repo
         run: |
           echo "🔍 Final verification of repository before push..."
           REPO_NAME="${{ env.SERVICE_NAME }}"
-          REPO_PATH="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/$REPO_NAME/$REPO_NAME"
           
+          # Get the actual registry URI
+          REGISTRY_URI=$(gcloud artifacts repositories describe $REPO_NAME \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(name)' 2>/dev/null | sed 's|projects/.*/locations/\(.*\)/repositories/.*|\1-docker.pkg.dev|' || echo "${{ env.REGION }}-docker.pkg.dev")
+          
+          if [ -z "$REGISTRY_URI" ] || [ "$REGISTRY_URI" == "docker.pkg.dev" ]; then
+            REGISTRY_URI="${{ env.REGION }}-docker.pkg.dev"
+          fi
+          
+          REPO_PATH="$REGISTRY_URI/${{ env.PROJECT_ID }}/$REPO_NAME/$REPO_NAME"
+          
+          echo "Registry URI: $REGISTRY_URI"
           echo "Repository path: $REPO_PATH"
           
           # Verify repository exists
@@ -197,21 +241,30 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Repository confirmed to exist"
+          echo "registry=$REGISTRY_URI" >> $GITHUB_OUTPUT
+          echo "✅ Repository confirmed to exist at $REGISTRY_URI"
 
       - name: Push Docker image to Artifact Registry
         id: push-image
         run: |
           echo "📤 Pushing Docker image to Artifact Registry..."
-          IMAGE_TAG="${{ steps.build-image.outputs.image }}"
-          LATEST_TAG="${{ steps.build-image.outputs.latest }}"
           
+          # Use the registry URI from verification step or fallback
+          REGISTRY="${{ steps.verify-repo.outputs.registry }}"
+          if [ -z "$REGISTRY" ]; then
+            REGISTRY="${{ env.REGION }}-docker.pkg.dev"
+          fi
+          
+          IMAGE_TAG="$REGISTRY/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          LATEST_TAG="$REGISTRY/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest"
+          
+          echo "Using registry: $REGISTRY"
           echo "Pushing image: $IMAGE_TAG"
           echo "Pushing latest: $LATEST_TAG"
           
-          # Verify Docker is authenticated
+          # Verify Docker is authenticated to the correct registry
           echo "🔐 Verifying Docker authentication..."
-          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin ${{ env.ARTIFACT_REGISTRY }}
+          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin $REGISTRY
           
           # Push with retry logic
           MAX_RETRIES=3
