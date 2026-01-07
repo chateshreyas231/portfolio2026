@@ -159,6 +159,29 @@ export default function AIWidget() {
       setMessages([greetingMessage]);
       setIsConversationActive(true);
       
+      // Auto-start listening when widget opens (after greeting is shown)
+      setTimeout(() => {
+        if (isOpen && !isListening && !isSpeaking && profileData) {
+          setContinuousListening(true);
+          // Request microphone permission and start listening
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(() => {
+              // Permission granted, start listening
+              setTimeout(() => {
+                if (isOpen && !isListening && !isSpeaking) {
+                  startListening().catch(err => {
+                    // If auto-start fails, user can manually click orb
+                  });
+                }
+              }, 500);
+            })
+            .catch(() => {
+              // Permission denied or error - user can manually click orb
+              // Don't show error, just silently fail
+            });
+        }
+      }, 1500); // Wait 1.5 seconds after opening to start listening
+      
       // Start idle timeout - if no questions after 1 minute, ask if they need help
       helpPromptTimeoutRef.current = setTimeout(() => {
         if (isOpen && messages.length === 1 && !isListening && !isSpeaking && !continuousListening) {

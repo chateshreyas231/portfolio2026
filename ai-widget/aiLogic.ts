@@ -541,9 +541,14 @@ export async function processMessage(
       const normalizedQuery = userQuery.toLowerCase().replace(/\b(he|his|him)\b/g, 'shreyas');
       const ragResult = retrieveRelevantInfo(normalizedQuery, profile);
       
+      // Build comprehensive context including full profile summary
+      const fullContext = ragResult.context 
+        ? `${ragResult.context}\n\nAdditional Profile Information:\n- Summary: ${profile.summary || 'N/A'}\n- Background: ${profile.background || 'N/A'}\n- Key Skills: ${JSON.stringify(profile.skills || {})}\n- Major Projects: ${JSON.stringify(profile.major_projects?.slice(0, 3) || [])}\n- Experience: ${JSON.stringify(profile.experience?.slice(0, 3) || [])}\n- Achievements: ${JSON.stringify(profile.achievements || [])}`
+        : `Profile Summary: ${profile.summary || 'N/A'}\nBackground: ${profile.background || 'N/A'}\nSkills: ${JSON.stringify(profile.skills || {})}\nProjects: ${JSON.stringify(profile.major_projects?.slice(0, 5) || [])}\nExperience: ${JSON.stringify(profile.experience?.slice(0, 5) || [])}`;
+      
       // Try AI API first for natural conversation
       try {
-        const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, ragResult.context, sessionId, topicHistory);
+        const aiResponse = await callAIAPI(userMessage, conversationHistory, useLocalAI, fullContext, sessionId, topicHistory);
         if (aiResponse && aiResponse.trim().length > 10) {
           return aiResponse;
         }
@@ -601,8 +606,8 @@ async function callAIAPI(
     // Keep more history for better context (increased from 2 to 10)
     const recentHistory = conversationHistory.slice(-10);
     
-    // Increase RAG context for better responses
-    const limitedRagContext = ragContext ? ragContext.substring(0, 1000) : undefined;
+    // Increase RAG context for better responses - allow more context for detailed answers
+    const limitedRagContext = ragContext ? ragContext.substring(0, 3000) : undefined;
     
     // Add timeout for faster failure
     const controller = new AbortController();
