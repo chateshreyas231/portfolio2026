@@ -476,7 +476,11 @@ jobs:
       - name: Authenticate to Firebase
         run: |
           echo "🔐 Authenticating to Firebase..."
-          echo "${{ secrets.FIREBASE_TOKEN }}" | firebase login:ci --token
+          if [ -z "${{ secrets.FIREBASE_TOKEN }}" ]; then
+            echo "❌ FIREBASE_TOKEN secret is not set"
+            exit 1
+          fi
+          firebase login:ci --token "${{ secrets.FIREBASE_TOKEN }}"
           echo "✅ Firebase authentication successful"
 
       - name: Deploy to Firebase Hosting
