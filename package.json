@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=production next dev",
-    "dev:true": "next dev",
+    "dev": "next dev",
+    "dev:prod": "npm run build && npm start",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,8 +12,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "type-check": "tsc --noEmit",
-    "build:analyze": "ANALYZE=true next build",
-    "dev:prod": "npm run build && npm start"
+    "build:analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@react-three/drei": "^9.92.0",

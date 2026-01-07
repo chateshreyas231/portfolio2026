@@ -89,8 +89,9 @@ const nextConfig = {
   },
 
   // Output configuration
-  // Enable standalone mode for both dev and production (to match production behavior)
-  output: 'standalone',
+  // Enable standalone mode for production builds (required for Docker/Cloud Run)
+  // Note: standalone mode only works with 'next build', not 'next dev'
+  ...(process.env.NODE_ENV === 'production' ? { output: 'standalone' } : {}),
 
   // ESLint configuration - allow build to proceed despite ESLint errors
   // TODO: Fix ESLint errors properly in future
