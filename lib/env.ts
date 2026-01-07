@@ -64,8 +64,11 @@ if (typeof window === 'undefined') {
   try {
     validateEnv();
   } catch (error) {
+    // Always warn in dev mode, but don't throw to allow development
+    // In production, throw to catch issues early
     if (isDevelopment) {
       console.warn('⚠️  Environment validation warning:', (error as Error).message);
+      console.warn('⚠️  Continuing in development mode, but these vars are required for production');
     } else {
       throw error;
     }
