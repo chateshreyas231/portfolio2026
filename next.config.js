@@ -67,7 +67,7 @@ const nextConfig = {
 
   // Experimental features for better performance
   experimental: {
-    optimizeCss: false, // Disabled to remove experiments warning
+    optimizeCss: true, // Disabled to remove experiments warning
     optimizePackageImports: ['lucide-react', 'framer-motion', '@react-three/fiber', '@react-three/drei', 'three'],
   },
 
