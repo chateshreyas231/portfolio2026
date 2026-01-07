@@ -479,11 +479,24 @@ jobs:
         run: |
           echo "🔐 Authenticating to Firebase..."
           if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "❌ FIREBASE_TOKEN secret is not set"
+            echo "❌ FIREBASE_TOKEN secret is not set in GitHub Secrets"
+            echo "Please add FIREBASE_TOKEN to your repository secrets"
             exit 1
           fi
+          
+          # Verify token is set
+          echo "✅ FIREBASE_TOKEN is set (length: ${#FIREBASE_TOKEN})"
+          
           # Firebase CLI automatically uses FIREBASE_TOKEN from environment
-          firebase use ${{ env.PROJECT_ID }} --non-interactive
+          # No need to run login:ci - just set the token and use it
+          export FIREBASE_TOKEN="${{ secrets.FIREBASE_TOKEN }}"
+          
+          # Set the project (this will use the token automatically)
+          firebase use ${{ env.PROJECT_ID }} --non-interactive --token "$FIREBASE_TOKEN" || {
+            echo "⚠️ Failed to set project, trying without explicit token..."
+            firebase use ${{ env.PROJECT_ID }} --non-interactive
+          }
+          
           echo "✅ Firebase authentication successful"
 
       - name: Deploy to Firebase Hosting
@@ -492,7 +505,12 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           echo "🌐 Deploying to Firebase Hosting..."
-          firebase use ${{ env.PROJECT_ID }} --non-interactive
+          
+          # Ensure token is exported
+          export FIREBASE_TOKEN="${{ secrets.FIREBASE_TOKEN }}"
+          
+          # Set project with token
+          firebase use ${{ env.PROJECT_ID }} --non-interactive --token "$FIREBASE_TOKEN" || firebase use ${{ env.PROJECT_ID }} --non-interactive
           
           # Verify Cloud Run service is accessible
           SERVICE_URL="${{ steps.service-url.outputs.url }}"
