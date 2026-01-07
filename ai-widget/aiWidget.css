@@ -4,14 +4,14 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Floating 3D Robot Button - Theme Aware - No Circular Border */
+/* Floating 3D Robot Button - Theme Aware - No Circular Border - Bottom Right Corner */
 .ai-widget-spline-button {
   position: fixed;
-  bottom: 0.5rem;
-  right: 0.5rem;
+  bottom: 1.5rem;
+  right: 1.5rem;
   z-index: 9999;
-  width: 800px;
-  height: 800px;
+  width: 120px;
+  height: 120px;
   cursor: pointer;
   border-radius: 0;
   overflow: visible;
@@ -34,10 +34,10 @@ body.game-modal-open .ai-widget-spline-button {
 
 @media (max-width: 640px) {
   .ai-widget-spline-button {
-    width: 400px;
-    height: 400px;
-    bottom: 0.5rem;
-    right: 0.5rem;
+    width: 80px;
+    height: 80px;
+    bottom: 1rem;
+    right: 1rem;
   }
 }
 
@@ -138,7 +138,7 @@ body.glass-theme .ai-widget-spline-error {
 /* Chat Panel - Pop-up Modal Style - Positioned above widget, bottom right */
 .ai-widget-panel-popup {
   position: fixed;
-  bottom: 850px;
+  bottom: 150px;
   right: 1.5rem;
   width: 90%;
   max-width: 420px;
@@ -159,14 +159,14 @@ body.glass-theme .ai-widget-spline-error {
 
 @media (max-width: 640px) {
   .ai-widget-spline-button {
-    width: 280px;
-    height: 280px;
+    width: 80px;
+    height: 80px;
     bottom: 1rem;
     right: 1rem;
   }
   
   .ai-widget-panel-popup {
-    bottom: 120px;
+    bottom: 100px;
     right: 1rem;
     width: calc(100% - 2rem);
     max-width: calc(100% - 2rem);
@@ -1012,10 +1012,10 @@ body.glass-theme .ai-widget-backdrop {
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .ai-widget-spline-button {
-    bottom: 0.5rem;
-    right: 0.5rem;
-    width: 400px;
-    height: 400px;
+    bottom: 1rem;
+    right: 1rem;
+    width: 100px;
+    height: 100px;
   }
 
   .ai-widget-panel-popup {
@@ -1032,7 +1032,7 @@ body.glass-theme .ai-widget-backdrop {
 /* Popup Message - Appears near widget */
 .ai-widget-popup-message {
   position: fixed;
-  bottom: 850px;
+  bottom: 150px;
   right: 1.5rem;
   z-index: 10001;
   max-width: 300px;
@@ -1042,7 +1042,7 @@ body.glass-theme .ai-widget-backdrop {
 
 @media (max-width: 640px) {
   .ai-widget-popup-message {
-    bottom: 320px;
+    bottom: 100px;
     right: 1rem;
     max-width: calc(100vw - 2rem);
   }
@@ -1050,7 +1050,7 @@ body.glass-theme .ai-widget-backdrop {
 
 @media (min-width: 641px) {
   .ai-widget-popup-message {
-    bottom: 850px; /* Adjust for larger widget (800px + spacing) */
+    bottom: 150px; /* Positioned above the widget in bottom right corner */
   }
 }
 

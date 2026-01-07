@@ -3,15 +3,15 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 
-const recruiterSnapshotPoints = [
-  'LLM application engineering (prompt + context design, tool calling)',
-  'RAG pipelines (chunking, embeddings, vector retrieval)',
-  'Agent orchestration (LangChain/LangGraph patterns)',
-  'Evaluation harness: offline test sets, regression gates, human review loops',
-  'Integrations: REST/GraphQL, enterprise APIs, workflow systems',
-  'Full-stack delivery: React + TypeScript + Node/Python',
-  'Enterprise delivery exposure: ServiceNow Virtual Agent / NLU (experience, not identity)',
-  'Production reliability: CI/CD, observability, monitoring',
+const coreCompetencies = [
+  'I build LLM applications with careful prompt engineering, context design, and tool calling patterns',
+  'I design and implement RAG pipelines—from intelligent chunking strategies to embedding optimization and vector retrieval',
+  'I orchestrate AI agents using LangChain and LangGraph, creating reliable multi-step workflows',
+  'I maintain quality through evaluation harnesses: offline test suites, regression gates, and human review loops',
+  'I integrate with enterprise systems: REST/GraphQL APIs, workflow platforms, and business tools',
+  'I deliver full-stack solutions using React, TypeScript, Node.js, and Python',
+  'I have hands-on experience with ServiceNow Virtual Agent and NLU systems in production environments',
+  'I ensure reliability through CI/CD pipelines, observability tooling, and monitoring systems',
 ];
 
 export default function About() {
@@ -44,7 +44,7 @@ export default function About() {
             </p>
           </motion.div>
 
-          {/* Recruiter Snapshot - Highlighted Box */}
+          {/* Core Competencies - Highlighted Box */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -53,11 +53,11 @@ export default function About() {
             className="mb-12 bg-gradient-to-br from-white/10 to-white/5 rounded-3xl p-6 md:p-8 border border-white/20 backdrop-blur-sm"
           >
             <div className="mb-4">
-              <h3 className="text-lg md:text-xl font-bold text-white mb-2">RECRUITER SNAPSHOT</h3>
-              <p className="text-sm md:text-base text-white/70">High-value ATS + skim-friendly overview of core competencies.</p>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-2">Core Competencies</h3>
+              <p className="text-sm md:text-base text-white/70">What I bring to every project.</p>
             </div>
             <div className="grid md:grid-cols-2 gap-3 md:gap-4">
-              {recruiterSnapshotPoints.map((point, index) => (
+              {coreCompetencies.map((point, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-400 flex-shrink-0 mt-1" />
                   <p className="text-sm md:text-base text-white/90 leading-relaxed">{point}</p>

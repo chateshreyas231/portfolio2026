@@ -79,53 +79,61 @@ export default function Navigation({ currentSection }: NavigationProps) {
     <motion.nav
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed top-0 left-0 right-0 z-[9998] transition-all duration-300 pointer-events-auto py-4 md:py-5"
-      style={{ 
-        pointerEvents: 'auto',
-      }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed top-0 left-0 right-0 z-[9998] transition-all duration-300 pointer-events-auto py-3 md:py-4"
       suppressHydrationWarning
     >
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
         <motion.div 
-          className={`rounded-3xl px-6 md:px-10 py-6 md:py-7 transition-all duration-500 ${
+          className={`rounded-2xl px-4 md:px-6 py-3 md:py-4 transition-all duration-300 ${
             isScrolled 
-              ? 'shadow-2xl border border-white/20' 
-              : 'shadow-lg border border-white/10'
+              ? 'shadow-lg border border-white/15' 
+              : 'shadow-md border border-white/8'
           }`}
           style={{
             background: isScrolled 
-              ? 'rgba(26, 26, 26, 0.98)' 
-              : 'rgba(26, 26, 26, 0.85)',
-            backdropFilter: `blur(${isScrolled ? 24 : 16}px)`,
-            WebkitBackdropFilter: `blur(${isScrolled ? 24 : 16}px)`,
+              ? 'rgba(26, 26, 26, 0.95)' 
+              : 'rgba(26, 26, 26, 0.80)',
+            backdropFilter: `blur(${isScrolled ? 20 : 12}px)`,
+            WebkitBackdropFilter: `blur(${isScrolled ? 20 : 12}px)`,
           }}
         >
           <div className="flex items-center justify-between">
-            {/* Logo with enhanced styling */}
+            {/* Minimal Logo - No background, no name */}
             <motion.a
               href="#hero"
               onClick={(e) => {
                 e.preventDefault();
                 scrollToSection(0);
               }}
-              className="relative group flex items-center gap-3 cursor-pointer"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className="relative flex items-center cursor-pointer"
+              style={{
+                background: 'transparent',
+                backdropFilter: 'none',
+                WebkitBackdropFilter: 'none',
+                border: 'none',
+                padding: 0,
+                margin: 0,
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FEF9C3] via-[#DBEAFE] to-[#E9D5FF] rounded-xl opacity-0 group-hover:opacity-20 blur-sm transition-opacity duration-300" />
-                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-xl px-5 py-4 border border-white/10">
-                  <span className="text-3xl md:text-4xl font-bold text-white tracking-tighter">SC</span>
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <div className="text-base md:text-lg text-white/70 font-semibold">Shreyas Chate</div>
-              </div>
+              <span 
+                className="text-2xl md:text-3xl font-bold text-white tracking-tighter"
+                style={{
+                  background: 'transparent',
+                  backdropFilter: 'none',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                SC
+              </span>
             </motion.a>
 
-            {/* Desktop Navigation - Enhanced */}
-            <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+            {/* Desktop Navigation - Minimal */}
+            <div className="hidden lg:flex items-center gap-2 xl:gap-3">
               {navItems.map((item) => {
                 const isActive = currentSection === item.sectionIndex;
                 return (
@@ -136,55 +144,46 @@ export default function Navigation({ currentSection }: NavigationProps) {
                       e.stopPropagation();
                       scrollToSection(item.sectionIndex);
                     }}
-                    className="relative px-6 py-3.5 text-base font-medium transition-all rounded-xl pointer-events-auto cursor-pointer overflow-hidden group"
+                    className="relative px-4 py-2 text-sm font-medium transition-all rounded-lg pointer-events-auto cursor-pointer overflow-hidden"
                     style={{ pointerEvents: 'auto', zIndex: 9999 }}
-                    whileHover={{ scale: 1.05, y: -2 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    {/* Active state background */}
+                    {/* Active state background - minimal */}
                     {isActive && (
                       <motion.div
                         layoutId="activeNavDesktop"
-                        className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color}`}
+                        className={`absolute inset-0 rounded-lg bg-gradient-to-r ${item.color}`}
                         style={{ zIndex: -1, opacity: 1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
                     
-                    {/* Hover state */}
+                    {/* Hover state - minimal */}
                     {!isActive && (
                       <motion.div
-                        className="absolute inset-0 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute inset-0 rounded-lg bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"
                         style={{ zIndex: -1 }}
                       />
                     )}
                     
-                    {/* Text with glow effect on active */}
+                    {/* Text */}
                     <span 
-                      className={`relative z-10 transition-all ${
+                      className={`relative z-10 transition-colors ${
                         isActive 
-                          ? 'text-black font-bold drop-shadow-md' 
-                          : 'text-white/70 group-hover:text-white font-medium'
+                          ? 'text-black font-semibold' 
+                          : 'text-white/70 hover:text-white'
                       }`}
                     >
                       {item.name}
                     </span>
-                    
-                    {/* Active indicator dot */}
-                    {isActive && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-black rounded-full"
-                      />
-                    )}
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Tablet Navigation - Compact */}
-            <div className="hidden md:flex lg:hidden items-center gap-2">
+            {/* Tablet Navigation - Minimal */}
+            <div className="hidden md:flex lg:hidden items-center gap-1.5">
               {navItems.slice(0, 5).map((item) => {
                 const isActive = currentSection === item.sectionIndex;
                 return (
@@ -194,10 +193,10 @@ export default function Navigation({ currentSection }: NavigationProps) {
                       e.preventDefault();
                       scrollToSection(item.sectionIndex);
                     }}
-                    className={`relative px-4 py-2.5 text-sm rounded-xl transition-all ${
+                    className={`relative px-3 py-1.5 text-xs rounded-lg transition-all ${
                       isActive 
-                        ? `bg-gradient-to-r ${item.color} text-black font-bold` 
-                        : 'text-white/70 hover:text-white hover:bg-white/10 font-medium'
+                        ? `bg-gradient-to-r ${item.color} text-black font-semibold` 
+                        : 'text-white/70 hover:text-white hover:bg-white/10'
                     }`}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -207,22 +206,19 @@ export default function Navigation({ currentSection }: NavigationProps) {
               })}
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Button - Minimal */}
             <motion.button
-              className="md:hidden text-white p-3 rounded-xl hover:bg-white/10 transition-colors relative group"
+              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               whileTap={{ scale: 0.95 }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FEF9C3] to-[#E9D5FF] rounded-xl opacity-0 group-hover:opacity-20 blur-sm transition-opacity" />
-              <div className="relative">
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </div>
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </motion.button>
           </div>
         </motion.div>
       </div>
 
-      {/* Mobile Menu - Enhanced */}
+      {/* Mobile Menu - Minimal */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -232,30 +228,25 @@ export default function Navigation({ currentSection }: NavigationProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9997] md:hidden"
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9997] md:hidden"
               onClick={() => setIsMobileMenuOpen(false)}
             />
             
-            {/* Menu Panel */}
+            {/* Menu Panel - Minimal */}
             <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ 
-                type: 'spring',
-                stiffness: 300,
-                damping: 30,
-                duration: 0.3
-              }}
-              className="md:hidden absolute top-full left-4 right-4 mt-3 rounded-3xl overflow-hidden shadow-2xl z-[9999]"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden absolute top-full left-4 right-4 mt-2 rounded-2xl overflow-hidden shadow-xl z-[9999]"
               style={{
-                background: 'rgba(26, 26, 26, 0.98)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                background: 'rgba(26, 26, 26, 0.95)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
               }}
             >
-              <div className="p-3">
+              <div className="p-2">
                 {navItems.map((item, index) => {
                   const isActive = currentSection === item.sectionIndex;
                   return (
@@ -267,26 +258,25 @@ export default function Navigation({ currentSection }: NavigationProps) {
                         scrollToSection(item.sectionIndex);
                         setIsMobileMenuOpen(false);
                       }}
-                      className={`relative w-full text-left px-5 py-4 rounded-2xl transition-all pointer-events-auto cursor-pointer mb-1.5 overflow-hidden group ${
+                      className={`relative w-full text-left px-4 py-3 rounded-xl transition-all pointer-events-auto cursor-pointer mb-1 overflow-hidden ${
                         isActive 
-                          ? 'text-black font-bold' 
-                          : 'text-white/80 hover:text-white font-medium'
+                          ? 'text-black font-semibold' 
+                          : 'text-white/80 hover:text-white'
                       }`}
                       style={{ 
                         pointerEvents: 'auto', 
                         zIndex: 10001,
                       }}
-                      whileHover={{ x: 4 }}
                       whileTap={{ scale: 0.98 }}
-                      initial={{ opacity: 0, x: -20 }}
+                      initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.03 }}
                     >
                       {/* Active background */}
                       {isActive && (
                         <motion.div
                           layoutId="activeMobileNav"
-                          className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${item.color}`}
+                          className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color}`}
                           style={{ zIndex: -1, opacity: 1 }}
                           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                         />
@@ -295,25 +285,18 @@ export default function Navigation({ currentSection }: NavigationProps) {
                       {/* Hover background */}
                       {!isActive && (
                         <motion.div
-                          className="absolute inset-0 rounded-2xl bg-white/5 opacity-0 group-hover:opacity-100"
+                          className="absolute inset-0 rounded-xl bg-white/5 opacity-0 group-hover:opacity-100"
                           style={{ zIndex: -1 }}
                         />
                       )}
                       
-                      <span className="relative z-10 flex items-center gap-3">
+                      <span className="relative z-10 flex items-center gap-2">
                         <span className={`text-xs font-mono ${
-                          isActive ? 'text-black/60' : 'text-white/40'
+                          isActive ? 'text-black/50' : 'text-white/30'
                         }`}>
                           {String(index + 1).padStart(2, '0')}
                         </span>
                         <span className="flex-1">{item.name}</span>
-                        {isActive && (
-                          <motion.div
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            className="w-2 h-2 bg-black rounded-full"
-                          />
-                        )}
                       </span>
                     </motion.button>
                   );
