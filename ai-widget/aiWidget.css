@@ -10,8 +10,8 @@
   bottom: 1.5rem;
   right: 1.5rem;
   z-index: 9999;
-  width: 160px;
-  height: 160px;
+  width: 200px;
+  height: 200px;
   cursor: pointer;
   border-radius: 0;
   overflow: visible;
@@ -34,8 +34,8 @@ body.game-modal-open .ai-widget-spline-button {
 
 @media (max-width: 640px) {
   .ai-widget-spline-button {
-    width: 100px;
-    height: 100px;
+    width: 130px;
+    height: 130px;
     bottom: 1rem;
     right: 1rem;
   }
@@ -1014,8 +1014,8 @@ body.glass-theme .ai-widget-backdrop {
   .ai-widget-spline-button {
     bottom: 1rem;
     right: 1rem;
-    width: 100px;
-    height: 100px;
+    width: 130px;
+    height: 130px;
   }
 
   .ai-widget-panel-popup {

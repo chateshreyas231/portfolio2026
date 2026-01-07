@@ -70,8 +70,8 @@ function RobotModel({
       initialViewportHeightRef.current = viewport.height;
     }
     
-    // Scale to fit - use 18% of viewport height (slightly bigger)
-    const targetHeight = initialViewportHeightRef.current * 0.18;
+    // Scale to fit - use 22% of viewport height (bigger avatar)
+    const targetHeight = initialViewportHeightRef.current * 0.22;
     const scaleFactor = targetHeight / size.y;
     scaleFactorRef.current = scaleFactor;
     
