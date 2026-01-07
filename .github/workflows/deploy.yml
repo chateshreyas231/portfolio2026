@@ -61,6 +61,20 @@ jobs:
           echo "🔐 Verifying Google Cloud authentication..."
           gcloud auth list
           gcloud config get-value project
+          
+      - name: Check service account permissions
+        run: |
+          echo "🔍 Checking service account permissions..."
+          CURRENT_SA=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+          echo "Active service account: $CURRENT_SA"
+          
+          echo "Checking IAM permissions for Artifact Registry..."
+          gcloud projects get-iam-policy ${{ env.PROJECT_ID }} \
+            --flatten="bindings[].members" \
+            --filter="bindings.members:$CURRENT_SA" \
+            --format="table(bindings.role)" || echo "⚠️ Could not list IAM policies"
+          
+          echo "✅ Permission check completed"
 
       - name: Enable required APIs
         run: |
