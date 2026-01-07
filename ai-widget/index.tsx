@@ -159,28 +159,30 @@ export default function AIWidget() {
       setMessages([greetingMessage]);
       setIsConversationActive(true);
       
-      // Auto-start listening when widget opens (after greeting is shown)
+      // Enable continuous listening immediately so it starts after greeting
+      setContinuousListening(true);
+      
+      // Automatically speak the greeting as soon as widget opens
       setTimeout(() => {
-        if (isOpen && !isListening && !isSpeaking && profileData) {
-          setContinuousListening(true);
-          // Request microphone permission and start listening
+        if (isOpen) {
+          speakText(greeting);
+        }
+      }, 300); // Speak immediately after widget opens (300ms delay for UI to render)
+      
+      // Request microphone permission in background (will start listening after greeting finishes)
+      setTimeout(() => {
+        if (isOpen && profileData) {
           navigator.mediaDevices.getUserMedia({ audio: true })
             .then(() => {
-              // Permission granted, start listening
-              setTimeout(() => {
-                if (isOpen && !isListening && !isSpeaking) {
-                  startListening().catch(err => {
-                    // If auto-start fails, user can manually click orb
-                  });
-                }
-              }, 500);
+              // Permission granted - listening will start automatically after greeting finishes speaking
+              // (handled in audio.onended callback)
             })
             .catch(() => {
               // Permission denied or error - user can manually click orb
               // Don't show error, just silently fail
             });
         }
-      }, 1500); // Wait 1.5 seconds after opening to start listening
+      }, 500); // Start requesting permission 500ms after opening
       
       // Start idle timeout - if no questions after 1 minute, ask if they need help
       helpPromptTimeoutRef.current = setTimeout(() => {
@@ -482,9 +484,11 @@ export default function AIWidget() {
           setTimeout(() => {
             // Double-check chat is still open before restarting
             if (isOpen && !isListening && !isSpeaking && !isLoading) {
-              startListening();
+              startListening().catch(() => {
+                // If listening fails, user can manually click orb
+              });
             }
-          }, 800); // Small delay after speech ends to allow user to respond
+          }, 500); // Small delay after speech ends to allow user to respond
         }
       };
 

@@ -45,12 +45,16 @@ export interface Message {
 }
 
 /**
- * Get timezone-based greeting message
+ * Get timezone-based greeting message with holidays and festivals
  */
 export function getInitialGreeting(): string {
   const now = new Date();
   const hour = now.getHours();
+  const day = now.getDay(); // 0 = Sunday, 6 = Saturday
+  const month = now.getMonth(); // 0 = January, 11 = December
+  const date = now.getDate();
   
+  // Time-based greeting
   let timeGreeting = '';
   if (hour >= 5 && hour < 12) {
     timeGreeting = 'Good morning';
@@ -62,9 +66,89 @@ export function getInitialGreeting(): string {
     timeGreeting = 'Good evening'; // Late night
   }
   
-  return `${timeGreeting}! 👋 I'm Mr. Shreyas Chate's AI assistant. I'm here to help you learn about Mr. Shreyas — his background, work experience, projects, and expertise in conversational AI.
+  // Day of week greeting
+  const dayGreeting = day === 0 ? 'Happy Sunday' : 
+                      day === 6 ? 'Happy Saturday' : 
+                      day === 5 ? 'Happy Friday' : '';
+  
+  // Holiday and festival detection
+  let holidayGreeting = '';
+  
+  // New Year (January 1)
+  if (month === 0 && date === 1) {
+    holidayGreeting = 'Happy New Year! 🎉';
+  }
+  // Valentine's Day (February 14)
+  else if (month === 1 && date === 14) {
+    holidayGreeting = 'Happy Valentine\'s Day! 💝';
+  }
+  // St. Patrick's Day (March 17)
+  else if (month === 2 && date === 17) {
+    holidayGreeting = 'Happy St. Patrick\'s Day! 🍀';
+  }
+  // Easter (approximate - first Sunday after first full moon after March 21)
+  // For simplicity, checking April dates
+  else if (month === 3 && (date >= 1 && date <= 30)) {
+    // Could be Easter season
+    if (day === 0 && date >= 1 && date <= 7) {
+      holidayGreeting = 'Happy Easter! 🐰';
+    }
+  }
+  // Mother's Day (second Sunday in May - simplified)
+  else if (month === 4 && day === 0 && date >= 8 && date <= 14) {
+    holidayGreeting = 'Happy Mother\'s Day! 💐';
+  }
+  // Father's Day (third Sunday in June - simplified)
+  else if (month === 5 && day === 0 && date >= 15 && date <= 21) {
+    holidayGreeting = 'Happy Father\'s Day! 👔';
+  }
+  // Independence Day (July 4)
+  else if (month === 6 && date === 4) {
+    holidayGreeting = 'Happy Independence Day! 🇺🇸';
+  }
+  // Halloween (October 31)
+  else if (month === 9 && date === 31) {
+    holidayGreeting = 'Happy Halloween! 🎃';
+  }
+  // Thanksgiving (fourth Thursday in November - simplified)
+  else if (month === 10 && day === 4 && date >= 22 && date <= 28) {
+    holidayGreeting = 'Happy Thanksgiving! 🦃';
+  }
+  // Christmas Eve (December 24)
+  else if (month === 11 && date === 24) {
+    holidayGreeting = 'Merry Christmas Eve! 🎄';
+  }
+  // Christmas (December 25)
+  else if (month === 11 && date === 25) {
+    holidayGreeting = 'Merry Christmas! 🎄🎅';
+  }
+  // New Year's Eve (December 31)
+  else if (month === 11 && date === 31) {
+    holidayGreeting = 'Happy New Year\'s Eve! 🎉';
+  }
+  // Diwali (usually October/November - checking November dates)
+  else if (month === 10 && date >= 1 && date <= 15) {
+    holidayGreeting = 'Happy Diwali! 🪔';
+  }
+  // Hanukkah season (usually December)
+  else if (month === 11 && date >= 1 && date <= 30) {
+    holidayGreeting = 'Happy Hanukkah! 🕎';
+  }
+  
+  // Build the greeting
+  let greeting = '';
+  
+  if (holidayGreeting) {
+    greeting = `${holidayGreeting} ${timeGreeting}! 👋`;
+  } else if (dayGreeting) {
+    greeting = `${dayGreeting}! ${timeGreeting}! 👋`;
+  } else {
+    greeting = `${timeGreeting}! 👋`;
+  }
+  
+  return `${greeting} I'm Mr. Shreyas Chate's AI assistant. I'm here to help you learn about Mr. Shreyas — his background, work experience, projects, and expertise in conversational AI.
 
-I can also help you schedule a meeting with him or share his resume. What would you like to know?`;
+How can I help you today?`;
 }
 
 /**
