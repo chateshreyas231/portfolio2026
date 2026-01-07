@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useGLTF, ContactShadows } from '@react-three/drei';
+import { useGLTF, useAnimations, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Suppress FBX loader errors globally
@@ -45,8 +45,14 @@ function RobotModel({
   modelPath: string;
 }) {
   // Load the GLB model - path is relative to public folder
-  const gltf = useGLTF(modelPath);
+  // Validate modelPath to prevent undefined errors
+  const safeModelPath = modelPath || '/ai_robot.glb';
+  const gltf = useGLTF(safeModelPath);
   const scene = gltf.scene;
+  
+  // Get animations from the GLB file
+  const { actions, mixer } = useAnimations(gltf.animations, scene);
+  
   const robotRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Object3D | null>(null);
   const eyesRef = useRef<THREE.Object3D[]>([]);
@@ -97,7 +103,34 @@ function RobotModel({
     isInitializedRef.current = true;
   }, [scene, viewport.height]);
 
-  useFrame((state) => {
+  // Play animations if they exist
+  useEffect(() => {
+    if (actions && Object.keys(actions).length > 0) {
+      // Play all animations
+      Object.values(actions).forEach((action) => {
+        if (action) {
+          action.reset().fadeIn(0.5).play();
+        }
+      });
+    }
+    
+    return () => {
+      // Cleanup animations when component unmounts or model changes
+      if (actions) {
+        Object.values(actions).forEach((action) => {
+          if (action) {
+            action.fadeOut(0.5);
+          }
+        });
+      }
+    };
+  }, [actions, safeModelPath]);
+
+  useFrame((state, delta) => {
+    // Update animation mixer
+    if (mixer) {
+      mixer.update(delta);
+    }
     if (!robotRef.current || !state) return;
     
     const t = state.clock?.getElapsedTime() || 0;
