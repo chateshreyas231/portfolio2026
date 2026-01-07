@@ -246,7 +246,7 @@ export default function Hero() {
           >
             <div>
               <h3 className="text-xl md:text-2xl lg:text-3xl font-bold text-black mb-3 md:mb-4 leading-tight">
-                Have an idea? Let&apos;s ship it.
+                Got an idea? Don&apos;t let it rest. Let&apos;s start working on it.
               </h3>
             </div>
             <div className="mt-6">
