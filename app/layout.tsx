@@ -51,6 +51,39 @@ export default function RootLayout({
         {/* Preconnect to improve performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        {/* Suppress 404 errors for missing files (likely from browser cache) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Suppress 404 errors for missing .fbx files (likely from browser cache)
+              window.addEventListener('error', function(e) {
+                if (e.message && (
+                  e.message.includes('Talking1.fbx') ||
+                  e.message.includes('.fbx') ||
+                  e.message.includes('404') ||
+                  e.message.includes('Not Found')
+                )) {
+                  console.warn('Suppressed 404 error (likely cached reference):', e.message);
+                  e.preventDefault();
+                  return false;
+                }
+              }, true);
+              
+              // Also catch unhandled promise rejections for 404s
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && (
+                  e.reason.message?.includes('Talking1.fbx') ||
+                  e.reason.message?.includes('.fbx') ||
+                  e.reason.message?.includes('404') ||
+                  e.reason.message?.includes('Not Found')
+                )) {
+                  console.warn('Suppressed 404 promise rejection (likely cached reference):', e.reason.message);
+                  e.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
       </head>
       <body>
         <ErrorBoundary>
