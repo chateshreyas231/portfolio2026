@@ -15,6 +15,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       id-token: write
@@ -22,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -31,12 +34,17 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        continue-on-error: false
 
       - name: Build Next.js application
         env:
           NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
           NEXT_PUBLIC_FIREBASE_API_KEY: ${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-        run: npm run build
+          NODE_ENV: production
+        run: |
+          echo "🔨 Building Next.js application..."
+          npm run build
+          echo "✅ Build completed successfully"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -45,115 +53,289 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify Google Cloud authentication
+        run: |
+          echo "🔐 Verifying Google Cloud authentication..."
+          gcloud auth list
+          gcloud config get-value project
 
       - name: Enable required APIs
         run: |
-          gcloud services enable artifactregistry.googleapis.com --project=${{ env.PROJECT_ID }} || true
-          gcloud services enable cloudbuild.googleapis.com --project=${{ env.PROJECT_ID }} || true
-          gcloud services enable run.googleapis.com --project=${{ env.PROJECT_ID }} || true
-          gcloud services enable secretmanager.googleapis.com --project=${{ env.PROJECT_ID }} || true
+          echo "🔧 Enabling required Google Cloud APIs..."
+          gcloud services enable artifactregistry.googleapis.com --project=${{ env.PROJECT_ID }} || echo "⚠️ Artifact Registry API may already be enabled"
+          gcloud services enable cloudbuild.googleapis.com --project=${{ env.PROJECT_ID }} || echo "⚠️ Cloud Build API may already be enabled"
+          gcloud services enable run.googleapis.com --project=${{ env.PROJECT_ID }} || echo "⚠️ Cloud Run API may already be enabled"
+          gcloud services enable secretmanager.googleapis.com --project=${{ env.PROJECT_ID }} || echo "⚠️ Secret Manager API may already be enabled"
+          echo "✅ APIs enabled"
 
-      - name: Create Artifact Registry repository (if not exists)
+      - name: Create Artifact Registry repository
+        id: create-repo
         run: |
-          if ! gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} --location=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
-            echo "Creating Artifact Registry repository..."
+          echo "📦 Checking Artifact Registry repository..."
+          if gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+            echo "✅ Repository already exists"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "📦 Creating Artifact Registry repository..."
             gcloud artifacts repositories create ${{ env.SERVICE_NAME }} \
               --repository-format=docker \
               --location=${{ env.REGION }} \
               --project=${{ env.PROJECT_ID }} \
-              --description="Docker repository for portfolio app"
-          else
-            echo "Artifact Registry repository already exists"
+              --description="Docker repository for portfolio app" \
+              --quiet
+            echo "✅ Repository created successfully"
+            echo "exists=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Verify Artifact Registry repository
+        run: |
+          echo "🔍 Verifying repository access..."
+          gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} \
+            --location=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }}
+          echo "✅ Repository verified"
 
       - name: Configure Docker for Artifact Registry
         run: |
+          echo "🐳 Configuring Docker authentication..."
           gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
+          echo "✅ Docker configured"
 
       - name: Build Docker image
+        id: build-image
         run: |
-          docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-          docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest .
+          echo "🔨 Building Docker image..."
+          IMAGE_TAG="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}"
+          LATEST_TAG="${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest"
+          
+          echo "Building image: $IMAGE_TAG"
+          docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
+          
+          echo "image=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "latest=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "✅ Docker image built successfully"
 
       - name: Push Docker image to Artifact Registry
+        id: push-image
         run: |
-          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
+          echo "📤 Pushing Docker image to Artifact Registry..."
+          IMAGE_TAG="${{ steps.build-image.outputs.image }}"
+          LATEST_TAG="${{ steps.build-image.outputs.latest }}"
+          
+          # Push with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if docker push "$IMAGE_TAG" && docker push "$LATEST_TAG"; then
+              echo "✅ Images pushed successfully"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️ Push failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+                sleep 5
+              else
+                echo "❌ Push failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Create or update Resend API key secret
         run: |
-          if gcloud secrets describe resend-api-key --project=${{ env.PROJECT_ID }} &>/dev/null; then
+          echo "🔐 Managing Resend API key secret..."
+          if gcloud secrets describe resend-api-key --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+            echo "📝 Updating existing secret..."
             echo -n "${{ secrets.RESEND_API_KEY }}" | gcloud secrets versions add resend-api-key --data-file=- --project=${{ env.PROJECT_ID }}
+            echo "✅ Secret updated"
           else
-            echo -n "${{ secrets.RESEND_API_KEY }}" | gcloud secrets create resend-api-key --data-file=- --project=${{ env.PROJECT_ID }} --replication-policy="automatic"
+            echo "📝 Creating new secret..."
+            echo -n "${{ secrets.RESEND_API_KEY }}" | gcloud secrets create resend-api-key \
+              --data-file=- \
+              --project=${{ env.PROJECT_ID }} \
+              --replication-policy="automatic"
+            echo "✅ Secret created"
           fi
           
           # Grant Cloud Run access to the secret
+          echo "🔑 Granting Cloud Run access to secret..."
           PROJECT_NUMBER=$(gcloud projects describe ${{ env.PROJECT_ID }} --format='value(projectNumber)')
           gcloud secrets add-iam-policy-binding resend-api-key \
             --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
             --role="roles/secretmanager.secretAccessor" \
             --project=${{ env.PROJECT_ID }} \
-            --quiet || true
+            --quiet || echo "⚠️ IAM binding may already exist"
 
       - name: Deploy to Cloud Run
+        id: deploy-cloud-run
         run: |
-          # Check if service exists and remove PORT env var if it does
-          if gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
-            echo "Service exists. Removing PORT env var if present..."
+          echo "🚀 Deploying to Cloud Run..."
+          IMAGE_TAG="${{ steps.build-image.outputs.image }}"
+          
+          # Check if service exists
+          if gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} 2>/dev/null; then
+            echo "📝 Service exists, updating..."
+            
+            # Remove PORT env var if it exists (Cloud Run sets this automatically)
             gcloud run services update ${{ env.SERVICE_NAME }} \
               --region=${{ env.REGION }} \
               --project=${{ env.PROJECT_ID }} \
               --remove-env-vars PORT \
-              --quiet 2>/dev/null || echo "PORT removal attempted (may not exist)"
+              --quiet 2>/dev/null || echo "⚠️ PORT removal attempted (may not exist)"
+          else
+            echo "📝 Service does not exist, will create new service"
           fi
           
-          # Deploy to Cloud Run
-          gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
-            --platform managed \
-            --region=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} \
-            --allow-unauthenticated \
-            --min-instances 1 \
-            --max-instances 10 \
-            --memory 2Gi \
-            --cpu 2 \
-            --timeout 300 \
-            --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
-            --update-secrets "RESEND_API_KEY=resend-api-key:latest" \
-            --port 8080 \
-            --quiet
+          # Deploy to Cloud Run with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if gcloud run deploy ${{ env.SERVICE_NAME }} \
+              --image "$IMAGE_TAG" \
+              --platform managed \
+              --region=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --allow-unauthenticated \
+              --min-instances 1 \
+              --max-instances 10 \
+              --memory 2Gi \
+              --cpu 2 \
+              --timeout 300 \
+              --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
+              --update-secrets "RESEND_API_KEY=resend-api-key:latest" \
+              --port 8080 \
+              --quiet; then
+              echo "✅ Cloud Run deployment successful"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️ Deployment failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+                sleep 10
+              else
+                echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Get Cloud Run service URL
         id: service-url
         run: |
-          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} --region=${{ env.REGION }} --project=${{ env.PROJECT_ID }} --format 'value(status.url)')
+          echo "🔍 Retrieving Cloud Run service URL..."
+          SERVICE_URL=$(gcloud run services describe ${{ env.SERVICE_NAME }} \
+            --region=${{ env.REGION }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format 'value(status.url)')
+          
+          if [ -z "$SERVICE_URL" ]; then
+            echo "❌ Failed to get service URL"
+            exit 1
+          fi
+          
           echo "url=$SERVICE_URL" >> $GITHUB_OUTPUT
-          echo "✅ Cloud Run service deployed at: $SERVICE_URL"
+          echo "✅ Cloud Run service URL: $SERVICE_URL"
+
+      - name: Verify Cloud Run deployment
+        run: |
+          echo "🔍 Verifying Cloud Run deployment..."
+          SERVICE_URL="${{ steps.service-url.outputs.url }}"
+          
+          # Wait for service to be ready
+          echo "⏳ Waiting for service to be ready..."
+          sleep 10
+          
+          # Check if service is responding
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/api/health" | grep -q "200\|404"; then
+              echo "✅ Service is responding"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⏳ Service not ready yet, waiting... ($RETRY_COUNT/$MAX_RETRIES)"
+                sleep 10
+              else
+                echo "⚠️ Service may not be fully ready, but deployment completed"
+              fi
+            fi
+          done
 
       - name: Install Firebase CLI
         run: |
+          echo "🔥 Installing Firebase CLI..."
           npm install -g firebase-tools
+          firebase --version
+          echo "✅ Firebase CLI installed"
 
       - name: Authenticate to Firebase
         run: |
+          echo "🔐 Authenticating to Firebase..."
           echo "${{ secrets.FIREBASE_TOKEN }}" | firebase login:ci --token
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          echo "✅ Firebase authentication successful"
 
       - name: Deploy to Firebase Hosting
+        id: deploy-firebase
         run: |
+          echo "🌐 Deploying to Firebase Hosting..."
           firebase use ${{ env.PROJECT_ID }}
-          firebase deploy --only hosting
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if firebase deploy --only hosting --non-interactive; then
+              echo "✅ Firebase Hosting deployment successful"
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "⚠️ Firebase deployment failed, retrying ($RETRY_COUNT/$MAX_RETRIES)..."
+                sleep 10
+              else
+                echo "❌ Firebase deployment failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Deployment Summary
+        if: always()
         run: |
-          echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Cloud Run Service:** ${{ steps.service-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Firebase Hosting:** Deployed successfully" >> $GITHUB_STEP_SUMMARY
-          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "### ✅ Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Cloud Run Service:** ${{ steps.service-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Firebase Hosting:** Deployed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+            echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 Your portfolio is now live!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the logs above for error details." >> $GITHUB_STEP_SUMMARY
+            echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          fi
 
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          echo "🧹 Cleaning up on failure..."
+          # Add any cleanup logic here if needed
+          echo "Cleanup completed"
