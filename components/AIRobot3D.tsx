@@ -29,7 +29,6 @@ const GLB_MODELS = [
   '/ai-widget/Silly Dancing.glb',
   '/ai-widget/Reaction.glb',
   '/ai-widget/Quick Formal Bow.glb',
-  '/ai_robot.glb', // Fallback to original
 ];
 
 // Note: Preload is handled by useGLTF hook automatically
@@ -46,7 +45,7 @@ function RobotModel({
 }) {
   // Load the GLB model - path is relative to public folder
   // Validate modelPath to prevent undefined errors
-  const safeModelPath = modelPath || '/ai_robot.glb';
+  const safeModelPath = modelPath || GLB_MODELS[0];
   const gltf = useGLTF(safeModelPath);
   const scene = gltf.scene;
   
@@ -76,8 +75,11 @@ function RobotModel({
       initialViewportHeightRef.current = viewport.height;
     }
     
-    // Scale to fit - use 22% of viewport height (bigger avatar)
-    const targetHeight = initialViewportHeightRef.current * 0.22;
+    // Scale to fit - use minimum 18% of viewport height (always maintain minimum size)
+    const minHeight = initialViewportHeightRef.current * 0.18;
+    const naturalHeight = size.y;
+    // Use whichever is larger to ensure minimum 18% screen height
+    const targetHeight = Math.max(minHeight, naturalHeight * 0.5);
     const scaleFactor = targetHeight / size.y;
     scaleFactorRef.current = scaleFactor;
     
@@ -106,10 +108,12 @@ function RobotModel({
   // Play animations if they exist
   useEffect(() => {
     if (actions && Object.keys(actions).length > 0) {
-      // Play all animations
+      // Play all animations at slower speed
       Object.values(actions).forEach((action) => {
         if (action) {
-          action.reset().fadeIn(0.5).play();
+          action.reset();
+          action.setEffectiveTimeScale(0.5); // Slow down to 50% speed
+          action.fadeIn(0.5).play();
         }
       });
     }
@@ -127,9 +131,9 @@ function RobotModel({
   }, [actions, safeModelPath]);
 
   useFrame((state, delta) => {
-    // Update animation mixer
+    // Update animation mixer with slower speed (0.5x speed = half speed)
     if (mixer) {
-      mixer.update(delta);
+      mixer.update(delta * 0.5);
     }
     if (!robotRef.current || !state) return;
     
