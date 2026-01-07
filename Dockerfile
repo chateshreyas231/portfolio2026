@@ -20,6 +20,7 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
+
 # Build info will be set during CI/CD build
 ARG BUILD_TIMESTAMP
 ARG BUILD_VERSION
@@ -27,6 +28,13 @@ ARG GIT_COMMIT
 ENV BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-unknown}
 ENV BUILD_VERSION=${BUILD_VERSION:-dev}
 ENV GIT_COMMIT=${GIT_COMMIT:-unknown}
+
+# Next.js public env vars (needed at build time for client-side code)
+# These should be set in CI/CD before building Docker image
+ARG NEXT_PUBLIC_FIREBASE_PROJECT_ID
+ARG NEXT_PUBLIC_FIREBASE_API_KEY
+ENV NEXT_PUBLIC_FIREBASE_PROJECT_ID=${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
+ENV NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
 
 # Build the application
 RUN npm run build

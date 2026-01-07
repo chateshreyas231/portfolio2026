@@ -45,12 +45,15 @@ jobs:
           BUILD_TIMESTAMP: ${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}
           BUILD_VERSION: ${{ github.run_number }}
           GIT_COMMIT: ${{ github.sha }}
+          # Note: OPENAI_API_KEY and GROQ_API_KEY are runtime-only (not needed at build time)
         run: |
           echo "🔨 Building Next.js application..."
           echo "📦 Build Info:"
           echo "   Version: $BUILD_VERSION"
           echo "   Commit: $GIT_COMMIT"
           echo "   Timestamp: $BUILD_TIMESTAMP"
+          echo "   Firebase Project: $NEXT_PUBLIC_FIREBASE_PROJECT_ID"
+          echo "   Firebase Key: ${NEXT_PUBLIC_FIREBASE_API_KEY:0:20}..." # Show first 20 chars only
           npm run build
           echo "✅ Build completed successfully"
 
@@ -216,6 +219,8 @@ jobs:
             --build-arg BUILD_TIMESTAMP="${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}" \
             --build-arg BUILD_VERSION="${{ github.run_number }}" \
             --build-arg GIT_COMMIT="${{ github.sha }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID="${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
             -t "$IMAGE_TAG" \
             -t "$LATEST_TAG" .
           
@@ -396,7 +401,7 @@ jobs:
               --memory 2Gi \
               --cpu 2 \
               --timeout 300 \
-              --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}" \
+              --update-env-vars "NODE_ENV=production,CONTACT_EMAIL=connect@shreyaschate.dev,FROM_EMAIL=Portfolio Contact <onboarding@resend.dev>,NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},GROQ_API_KEY=${{ secrets.GROQ_API_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
               --update-secrets "RESEND_API_KEY=resend-api-key:latest" \
               --port 8080 \
               --quiet; then
