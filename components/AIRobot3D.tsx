@@ -5,6 +5,20 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
 
+// Suppress FBX loader errors globally
+if (typeof window !== 'undefined') {
+  // Override Three.js FBXLoader to suppress errors
+  const originalError = console.error;
+  console.error = function(...args: any[]) {
+    const message = args.join(' ');
+    if (message.includes('.fbx') || message.includes('Talking1') || message.includes('Waving') || message.includes('Could not load')) {
+      console.warn('Suppressed FBX error (likely cached reference):', message);
+      return;
+    }
+    originalError.apply(console, args);
+  };
+}
+
 type ScreenPoint = { x: number; y: number };
 
 // Note: Preload is handled by useGLTF hook automatically

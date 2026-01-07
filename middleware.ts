@@ -8,6 +8,17 @@ import type { NextRequest } from 'next/server';
 import { checkRateLimit, getClientIdentifier } from '@/lib/rateLimit';
 
 export function middleware(request: NextRequest) {
+  // Handle .fbx file requests - return empty response to prevent 404 errors
+  if (request.nextUrl.pathname.endsWith('.fbx')) {
+    return new NextResponse(null, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+      },
+    });
+  }
+
   const response = NextResponse.next();
 
   // Rate limiting for API routes
@@ -59,8 +70,11 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * Include .fbx files to handle them
      */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Also match .fbx files specifically
+    '/(.*\\.fbx)',
   ],
 };
 

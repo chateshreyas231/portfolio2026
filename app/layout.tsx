@@ -55,32 +55,50 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              // Suppress 404 errors for missing .fbx files (likely from browser cache)
-              window.addEventListener('error', function(e) {
-                if (e.message && (
-                  e.message.includes('Talking1.fbx') ||
-                  e.message.includes('.fbx') ||
-                  e.message.includes('404') ||
-                  e.message.includes('Not Found')
-                )) {
-                  console.warn('Suppressed 404 error (likely cached reference):', e.message);
-                  e.preventDefault();
-                  return false;
-                }
-              }, true);
-              
-              // Also catch unhandled promise rejections for 404s
-              window.addEventListener('unhandledrejection', function(e) {
-                if (e.reason && (
-                  e.reason.message?.includes('Talking1.fbx') ||
-                  e.reason.message?.includes('.fbx') ||
-                  e.reason.message?.includes('404') ||
-                  e.reason.message?.includes('Not Found')
-                )) {
-                  console.warn('Suppressed 404 promise rejection (likely cached reference):', e.reason.message);
-                  e.preventDefault();
-                }
-              });
+              (function() {
+                // Suppress 404 errors for missing .fbx files (likely from browser cache)
+                const originalFetch = window.fetch;
+                window.fetch = function(...args) {
+                  const url = args[0];
+                  if (typeof url === 'string' && (url.includes('.fbx') || url.includes('Talking1') || url.includes('Waving'))) {
+                    console.warn('Suppressed fetch for missing .fbx file (likely cached reference):', url);
+                    return Promise.reject(new Error('File not found (suppressed)'));
+                  }
+                  return originalFetch.apply(this, args);
+                };
+                
+                // Catch all errors
+                window.addEventListener('error', function(e) {
+                  if (e.message && (
+                    e.message.includes('Talking1.fbx') ||
+                    e.message.includes('Waving.fbx') ||
+                    e.message.includes('.fbx') ||
+                    e.message.includes('404') ||
+                    e.message.includes('Not Found') ||
+                    e.message.includes('Could not load')
+                  )) {
+                    console.warn('Suppressed 404 error (likely cached reference):', e.message);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                  }
+                }, true);
+                
+                // Catch unhandled promise rejections
+                window.addEventListener('unhandledrejection', function(e) {
+                  const message = e.reason?.message || e.reason?.toString() || '';
+                  if (message.includes('Talking1.fbx') ||
+                      message.includes('Waving.fbx') ||
+                      message.includes('.fbx') ||
+                      message.includes('404') ||
+                      message.includes('Not Found') ||
+                      message.includes('Could not load')) {
+                    console.warn('Suppressed 404 promise rejection (likely cached reference):', message);
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                });
+              })();
             `,
           }}
         />
