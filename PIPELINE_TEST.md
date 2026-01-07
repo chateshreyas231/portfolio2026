@@ -66,10 +66,25 @@
 
 ## 📝 Test Results
 
-### Test Run #2 - 2026-01-07
+### Test Run #3 - 2026-01-07
 **Status**: 🟡 Running...
-**Trigger**: Firebase authentication fix
-**Expected**: Full end-to-end success including Firebase Hosting deployment
+**Trigger**: Firebase authentication fix + End-to-end pipeline test
+**Expected**: 
+- ✅ Build Next.js application
+- ✅ Build and push Docker image to Artifact Registry
+- ✅ Deploy to Cloud Run with latest image
+- ✅ Authenticate to Firebase (FIXED)
+- ✅ Deploy to Firebase Hosting
+- ✅ Both URLs synced and showing full content
+
+### Test Run #2 - 2026-01-07
+**Status**: ❌ Failed
+**Issue**: Firebase authentication error
+**Fix Applied**: Simplified Firebase token authentication
+
+### Test Run #1 - 2026-01-07
+**Status**: ⚠️ Partial success
+**Result**: Cloud Run deployed, Firebase failed
 
 ---
 
