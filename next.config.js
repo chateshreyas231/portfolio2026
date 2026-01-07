@@ -67,7 +67,7 @@ const nextConfig = {
 
   // Experimental features for better performance
   experimental: {
-    optimizeCss: true,
+    optimizeCss: false, // Explicitly disabled - requires 'critters' package which is not installed
     optimizePackageImports: ['lucide-react', 'framer-motion', '@react-three/fiber', '@react-three/drei', 'three'],
   },
 
