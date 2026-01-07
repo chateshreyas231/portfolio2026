@@ -1,0 +1,19 @@
+{
+  "hosting": {
+    "public": ".next/static",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "portfolio-app",
+          "region": "us-central1"
+        }
+      }
+    ]
+  }
+}

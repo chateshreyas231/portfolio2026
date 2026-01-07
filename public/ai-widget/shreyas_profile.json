@@ -1,0 +1,422 @@
+{
+  "name": "Shreyas Chate",
+  "full_name": "Mr. Shreyas Chate",
+  "title": "Conversational AI Engineer",
+  "summary": "Conversational AI engineer crafting intelligent systems that transform how people interact with technology. Through ServiceNow, LangChain, and agentic workflows, I build solutions that don't just work, they understand, adapt, and deliver exceptional experiences.",
+  "background": "I bridge the gap between cutting-edge AI technology and real-world human needs. My work at Capital Group transformed how 40,000+ employees interact with IT support, turning complex systems into intuitive conversations that actually solve problems. I've built this across Fortune 500 companies, universities, and startups, always with one goal: making technology work for people, not the other way around.",
+  "tagline": "Human-first systems for intelligent conversations",
+  "location": {
+    "city": "Chicago",
+    "state": "Illinois",
+    "country": "USA",
+    "full": "Chicago, Illinois, USA",
+    "remote_friendly": true,
+    "open_to_relocation": false,
+    "preferred_locations": ["Chicago", "Remote", "Hybrid"]
+  },
+  "contact": {
+    "email": "connect@shreyaschate.dev",
+    "phone": "414-712-2417",
+    "website": "https://shreyaschate.com",
+    "linkedin": "https://www.linkedin.com/in/shreyas-chate/",
+    "github": "https://github.com/chateshreyas231",
+    "primary_email": "connect@shreyaschate.dev"
+  },
+  "education": {
+    "masters": {
+      "degree": "Masters of Science in Computer Science",
+      "school": "University of Wisconsin Milwaukee",
+      "location": "Milwaukee, WI, USA",
+      "period": "2022 – 2024",
+      "duration": "2 years",
+      "gpa": "3.4/4",
+      "status": "Completed",
+      "courses": [
+        "COMPSCI 552G - Advanced Object-Oriented Programming",
+        "COMPSCI 711 - Introduction to Machine Learning",
+        "COMPSCI 720 - Computational Models Decision Making",
+        "COMPSCI 723 - Natural Language Processing",
+        "COMPSCI 725 - Robot Motion Planning",
+        "COMPSCI 743 - Intelligent User Interfaces",
+        "COMPSCI 790 - Advanced Topics in Computer Science (Introduction to Research Computing)",
+        "COMPSCI 790 - Advanced Topics in Computer Science (Immersive Technologies and 3D User Interfaces)"
+      ],
+      "focus_areas": ["Machine Learning", "Natural Language Processing", "Intelligent User Interfaces", "Research Computing"]
+    },
+    "bachelors": {
+      "degree": "Bachelors of Engineering in Information Technology",
+      "school": "Savitribai Phule Pune University",
+      "location": "Pune, India",
+      "period": "2015 – 2019",
+      "duration": "4 years",
+      "gpa": "8.2/10",
+      "status": "Completed",
+      "courses": [
+        "110003 - Fundamentals of Programming",
+        "214441 - Computer Organization and Architecture",
+        "214442 - Computational Models Decision Making",
+        "214445 - Problem Solving and Object Oriented Programming",
+        "214452 - Data Structure and Files",
+        "314441 - Theory of Computation",
+        "314442 - Database Management Systems",
+        "314452 - Design Analysis and Algorithm",
+        "314453 - Cloud Computing",
+        "314454 - Data Science and Big Data Analytics",
+        "414453 - Information and Cybersecurity",
+        "414454 - Machine Learning",
+        "414455 - Software Design",
+        "414456E - Business Analytics"
+      ],
+      "focus_areas": ["Information Technology", "Machine Learning", "Cloud Computing", "Data Science"]
+    }
+  },
+  "experience": [
+    {
+      "period": "Jul 2024 – Present",
+      "duration": "1+ years",
+      "title": "Chatbot & Conversational AI Engineer",
+      "company": "Red River Technology",
+      "client": "Capital Group",
+      "location": "Chicago, IL",
+      "employment_type": "Full-time",
+      "remote": true,
+      "description": "Led the technical migration of 40,000+ employees to ServiceNow Agent Chat, establishing robust data governance and reporting frameworks that ensured zero-downtime deployment. Designed and implemented conversational AI journeys that increased intent recognition accuracy by 35%, enabling self-service for thousands of support requests daily. Architected production-grade LangChain and LangGraph RAG pipelines with automated CI/CD workflows, reducing support ticket resolution time by 40% while maintaining 99.9% uptime.",
+      "key_achievements": [
+        "Led migration of 40,000+ employees to ServiceNow Agent Chat with zero downtime",
+        "Increased intent recognition accuracy by 35% through NLU and retrieval tuning",
+        "Reduced support ticket resolution time by 40%",
+        "Maintained 99.9% uptime for AI-assisted workflows",
+        "Built automated CI/CD pipelines for conversational AI systems"
+      ],
+      "technologies": ["ServiceNow", "Amelia AI", "LangChain", "LangGraph", "Now Assist", "Analytics", "Vector Database", "RAG Pipelines"],
+      "skills_used": ["Conversational AI", "LLM Engineering", "RAG Pipelines", "NLU", "System Architecture", "CI/CD", "Data Governance"]
+    },
+    {
+      "period": "Mar 2022 – Jun 2024",
+      "duration": "2+ years",
+      "title": "Information Technology Consultant",
+      "company": "University of Wisconsin Milwaukee",
+      "location": "Milwaukee, WI",
+      "employment_type": "Full-time",
+      "remote": false,
+      "description": "Transformed IT help desk operations by redesigning knowledge base systems and implementing automated workflows, reducing MFA-related resolution time by 30% and improving student satisfaction scores. Built a production-ready React and Node.js chatbot with MariaDB backend that handled 40% of all student support inquiries.",
+      "key_achievements": [
+        "Reduced MFA-related resolution time by 30%",
+        "Built chatbot that handled 40% of all student support inquiries",
+        "Improved student satisfaction scores",
+        "Mentored Level 1 consultants",
+        "Partnered with Azure teams for secure user data integration"
+      ],
+      "technologies": ["React", "Node.js", "MariaDB", "Azure", "ServiceNow", "PowerBI"],
+      "skills_used": ["Full-Stack Development", "Chatbot Development", "Database Design", "Cloud Integration", "Mentoring"]
+    },
+    {
+      "period": "Aug 2021 – Aug 2022",
+      "duration": "1 year",
+      "title": "Software Engineer",
+      "company": "Volkswagen IT Services",
+      "location": "Pune, India",
+      "employment_type": "Full-time",
+      "remote": false,
+      "description": "Developed a reusable React and Redux component library that accelerated feature delivery across multiple product teams, reducing development time by 25% for new features. Optimized API integrations and S3 asset delivery, resulting in 30% faster page load times.",
+      "key_achievements": [
+        "Reduced development time by 25% for new features",
+        "Improved page load times by 30%",
+        "Built reusable component library",
+        "Established Agile practices and testing frameworks",
+        "Reduced production bugs by 35%"
+      ],
+      "technologies": ["React", "Redux", "Node.js", "GraphQL", "AWS S3", "GitHub Actions", "CI/CD"],
+      "skills_used": ["Frontend Development", "Component Architecture", "Performance Optimization", "Agile Methodology"]
+    },
+    {
+      "period": "Sept 2019 – July 2021",
+      "duration": "2 years",
+      "title": "Software Developer Intern/Co-op",
+      "company": "VibrantMinds Technologies",
+      "location": "Pune, India",
+      "employment_type": "Full-time Internship/Co-op",
+      "remote": false,
+      "description": "Built cross-platform React Native applications with sophisticated animations and lazy loading, achieving 60fps performance and seamless user experiences across iOS and Android. Established comprehensive Jest testing coverage and performance optimization practices that reduced post-deployment bugs by 25%.",
+      "key_achievements": [
+        "Achieved 60fps performance in React Native apps",
+        "Reduced post-deployment bugs by 25%",
+        "Built responsive single-page applications",
+        "Improved initial load times by 40%"
+      ],
+      "technologies": ["React Native", "React", "Redux", "Webpack", "Jest", "Testing", "Animations"],
+      "skills_used": ["Mobile Development", "Cross-Platform Development", "Performance Optimization", "Testing"]
+    }
+  ],
+  "major_projects": [
+    {
+      "name": "Enterprise Conversational Platform",
+      "period": "2024 – Present",
+      "company": "Red River Technology",
+      "category": "AI & ML",
+      "description": "Architected and led the migration of 40,000+ employees to a next-generation conversational AI platform, transforming how an entire organization interacts with IT support through intelligent automation.",
+      "highlights": [
+        "35% boost in accurate intent resolution through NLU & retrieval tuning",
+        "Unified live agent + virtual agent journeys with custom UI and governance dashboards",
+        "Automated release pipelines and observability for AI-assisted workflows"
+      ],
+      "technologies": ["ServiceNow", "Amelia AI", "LangChain", "LangGraph", "Now Assist", "Analytics"],
+      "impact": "Transformed IT support for 40,000+ employees"
+    },
+    {
+      "name": "UWM Helpdesk Intelligence Hub",
+      "period": "2022 – 2024",
+      "company": "University of Wisconsin Milwaukee",
+      "category": "Full Stack",
+      "description": "Built an intelligent support system that revolutionized student IT services, combining cutting-edge chatbot technology with intuitive design to dramatically improve response times and user satisfaction.",
+      "highlights": [
+        "Replaced 40% of traditional ticket volume with conversational support",
+        "Mentored Level 1 consultants with playbooks, training loops, and QA dashboards",
+        "Partnered with Azure & identity teams to connect user data with secure escalation paths"
+      ],
+      "technologies": ["React", "Node.js", "MariaDB", "Azure", "ServiceNow", "PowerBI"],
+      "impact": "Handled 40% of all student support inquiries"
+    },
+    {
+      "name": "Volkswagen Digital Operations Suite",
+      "period": "2021 – 2022",
+      "company": "Volkswagen IT Services",
+      "category": "Frontend",
+      "description": "Built component-driven React platforms and Node microservices powering internal VW workflows, with CI/CD, observability, and S3 optimizations for global teams.",
+      "highlights": [
+        "Reusable design system accelerated feature delivery across product squads",
+        "REST & GraphQL integration with automation improved deployment reliability",
+        "Strategic media optimization improved asset load time by 30%"
+      ],
+      "technologies": ["React", "Redux", "Node.js", "GraphQL", "AWS S3", "GitHub Actions"],
+      "impact": "Improved page load times by 30%"
+    },
+    {
+      "name": "AntHill CO₂ Intelligence",
+      "period": "2025",
+      "company": "Chicago Innovate",
+      "category": "AI & ML",
+      "description": "Led the team that won Best Overall Hack for an ML-powered dashboard visualizing real-time CO₂ emissions for architecture firms.",
+      "highlights": [
+        "End-to-end prototype in 24 hours combining real-time datasets, forecasting, and narrative visuals",
+        "Crafted UX flows that make sustainability metrics actionable for execs and project teams"
+      ],
+      "technologies": ["Python", "LLMs", "React", "D3.js", "AWS"],
+      "award": "Winner – Best Overall Hack at AEC+ Tech Innovate Hackathon 2025",
+      "impact": "Won Best Overall Hack award"
+    },
+    {
+      "name": "CIRCLES - Social Networking App",
+      "period": "2023",
+      "category": "Full Stack",
+      "description": "A Social networking app which makes you engage and connect with all the people you have met in your lifetime!",
+      "technologies": ["React Native", "Redux", "Router", "Expo-client", "Node.js", "TypeScript", "AWS S3", "RDS", "Amplify", "Cognito"]
+    },
+    {
+      "name": "AngryBirds VR",
+      "period": "2022",
+      "category": "Frontend",
+      "description": "A Virtual Reality AngryBirds game using Unity 3D, Translational and Rotational movements, Locomotion technique and RayCasting ops.",
+      "technologies": ["Unity 3D", "C# Scripts", "Oculus Headset 2 Meta"]
+    },
+    {
+      "name": "Image Processing for Snapshot Projection Optical Tomography",
+      "period": "2021",
+      "category": "AI & ML",
+      "description": "Optimized the MATLAB Code for processing images used for background subtraction and median filter by writing code in C language. Reduced time consumption for processing 100,000 images.",
+      "technologies": ["C", "MATLAB", "CIPS"]
+    },
+    {
+      "name": "BigScreen - Movie App",
+      "period": "2021",
+      "category": "Frontend",
+      "description": "A movie app which buffers and renders all the latest movies using TheMovieDB API.",
+      "technologies": ["ReactJS", "Router", "Javascript", "Firebase", "OAuth", "TheMovieDB API"]
+    },
+    {
+      "name": "FB Social Networking App",
+      "period": "2021",
+      "category": "Full Stack",
+      "description": "A social networking clone and a chat application with live status updates.",
+      "technologies": ["ReactJS", "Router", "Javascript", "Firebase", "OAuth", "Google User Auth", "Facebook News Feed API", "Live Status Updates"]
+    },
+    {
+      "name": "Twitter Sentiment Analysis for Ukraine Russia War",
+      "period": "2022",
+      "category": "AI & ML",
+      "description": "This project detected sentiment for all twitter posts using latest kaggle dataset. Development done to get all the necessary EDA's based on location of the tweet to detect the type of sentiment and the location from which the particular tweet was posted.",
+      "technologies": ["Python", "TensorFlow", "Keras", "NLP", "Anaconda"]
+    },
+    {
+      "name": "Amazon Shopify",
+      "period": "2021",
+      "category": "Full Stack",
+      "description": "A hobby project to build the Shopping Website integrating authentication, and payment methods using stripe.",
+      "technologies": ["ReactJS", "User Authentication", "Login", "Logout", "Product Cart", "Firebase", "Stripe Payment API", "Real Time Order History"]
+    },
+    {
+      "name": "Electricity Theft Detector",
+      "period": "2021",
+      "category": "AI & ML",
+      "description": "A system that detects theft by recognizing patterns according to seasons. The deployed model can send automatic e-mail notification to electricity provider admin if theft is detected at user's place.",
+      "technologies": ["Anaconda", "Spyder", "Python Tkinter", "Numpy", "Pandas", "Google Cloud Vision API", "Matplotlib", "Seaborn", "SciKit Learn", "Tensorflow"],
+      "award": "Best Research Paper at ICETEMS-2021"
+    },
+    {
+      "name": "Google Stock Price Prediction",
+      "period": "2021",
+      "category": "AI & ML",
+      "description": "A deep learning backend, in which I analyzed 5 yr. dataset for prediction of stock prices of current year.",
+      "technologies": ["Recurrent Neural Networks", "LSTM", "scikit-learn", "MatPlotLib", "Keras", "TensorFlow", "Training And Testing", "Visualizations", "Jupyter Notebook"]
+    },
+    {
+      "name": "Election Winner Predictor",
+      "period": "2021",
+      "category": "AI & ML",
+      "description": "An academic project where a model was deployed to predict the election winner following the trends and people's preferences along the years in past.",
+      "technologies": ["Jupyter Notebook", "Python", "Numpy", "Pandas", "MatplotLib", "Seaborn", "SciKit Learn"]
+    },
+    {
+      "name": "Face Mask Detector",
+      "period": "2021",
+      "category": "AI & ML",
+      "description": "A Face mask detector system implemented at a local company to detect if the face mask is ON for safety and security purpose at the location. A basic monitoring system for security guards.",
+      "technologies": ["Python", "Numpy", "Keras", "Seaborn", "Tensorflow", "SciKit Learn"]
+    }
+  ],
+  "skills": {
+    "ai_ml": {
+      "platforms": ["ServiceNow", "Amelia AI", "LangChain", "LangGraph", "OpenAI GPT"],
+      "frameworks": ["TensorFlow", "Keras", "scikit-learn"],
+      "languages": ["Python"],
+      "techniques": ["RAG Pipelines", "NLP", "Machine Learning", "Deep Learning", "LSTM", "RNN"]
+    },
+    "frontend": {
+      "frameworks": ["React", "React Native"],
+      "languages": ["TypeScript", "JavaScript"],
+      "libraries": ["Redux", "D3.js"],
+      "tools": ["Webpack"]
+    },
+    "backend": {
+      "frameworks": ["Node.js"],
+      "apis": ["REST APIs", "GraphQL"],
+      "databases": ["MariaDB"],
+      "languages": ["JavaScript", "TypeScript"]
+    },
+    "cloud_devops": {
+      "cloud": ["AWS", "Azure"],
+      "services": ["AWS S3", "AWS RDS", "AWS Amplify", "AWS Cognito"],
+      "devops": ["GitHub Actions", "CI/CD", "Docker"],
+      "monitoring": ["Sentry", "PowerBI", "Analytics"]
+    },
+    "tools": {
+      "testing": ["Jest"],
+      "platforms": ["ServiceNow", "Firebase"],
+      "other": ["PowerBI", "Analytics", "Unity 3D", "C#", "MATLAB", "C"]
+    }
+  },
+  "certifications": [
+    {
+      "name": "ServiceNow Certified System Administrator",
+      "issuer": "ServiceNow",
+      "category": "Platform",
+      "year": "2024"
+    },
+    {
+      "name": "ServiceNow Certified Application Developer",
+      "issuer": "ServiceNow",
+      "category": "Platform",
+      "year": "2024"
+    },
+    {
+      "name": "AWS Cloud Practitioner",
+      "issuer": "Amazon Web Services",
+      "category": "Cloud",
+      "year": "2023"
+    },
+    {
+      "name": "Azure AI-900",
+      "issuer": "Microsoft",
+      "category": "Cloud & AI",
+      "year": "2023"
+    },
+    {
+      "name": "Azure AI-102",
+      "issuer": "Microsoft",
+      "category": "Cloud & AI",
+      "year": "2023"
+    },
+    {
+      "name": "PagerDuty Certified DevOps Professional",
+      "issuer": "PagerDuty",
+      "category": "DevOps",
+      "year": "2023"
+    },
+    {
+      "name": "Certified Full-Stack React Native Developer",
+      "issuer": "React Native",
+      "category": "Engineering",
+      "year": "2022"
+    }
+  ],
+  "achievements": [
+    {
+      "title": "Winner – Best Overall Hack",
+      "event": "AEC+ Tech Innovate Hackathon 2025",
+      "description": "AntHill CO₂ analysis platform combining LLM forecasting with action-ready dashboards for architecture teams.",
+      "year": "2025",
+      "type": "Award"
+    },
+    {
+      "title": "Best Research Paper",
+      "event": "ICETEMS-2021",
+      "description": "Electricity Theft Detection using smart meter data, machine learning, and visual analytics.",
+      "year": "2021",
+      "type": "Award"
+    }
+  ],
+  "stats": {
+    "teammates_onboarded": "40K+",
+    "intent_recognition_boost": "35%",
+    "certifications": "7",
+    "projects_delivered": "30+",
+    "years_experience": "5+",
+    "technologies_mastered": "24+"
+  },
+  "personality": "I'm passionate about making technology work for people. I combine deep technical expertise with a focus on user experience. Every line of code I write, every system I design, is measured by one metric: does it make someone's day better? I love solving complex problems and seeing the moment when technology becomes invisible, when a chatbot understands context, when automation feels natural.",
+  "likes_dislikes": {
+    "likes": [
+      "Building AI systems that actually help people",
+      "Solving complex technical challenges",
+      "Creating elegant, user-friendly interfaces",
+      "Working with cutting-edge AI technologies",
+      "Mentoring and sharing knowledge",
+      "Continuous learning and experimentation"
+    ],
+    "dislikes": [
+      "Over-engineered solutions",
+      "Technology that doesn't consider user experience",
+      "Systems that are hard to maintain"
+    ]
+  },
+  "goals": [
+    "Continue pushing the boundaries of conversational AI",
+    "Build systems that make technology more accessible",
+    "Share knowledge through articles and mentorship",
+    "Work on projects that have meaningful impact"
+  ],
+  "availability": {
+    "status": "Open to opportunities",
+    "remote": true,
+    "hybrid": true,
+    "full_time": true,
+    "contract": false,
+    "preferred_roles": ["Conversational AI Engineer", "LLM Engineer", "AI Platform Engineer", "Senior Software Engineer"]
+  },
+  "resume_url": "/resume.pdf",
+  "calendly_or_scheduler_url": "https://calendly.com/shreyaschate",
+  "scheduler": {
+    "google_meet_api": "/api/schedule/google-meet",
+    "teams_api": "/api/schedule/teams"
+  }
+}

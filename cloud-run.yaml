@@ -1,0 +1,59 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: portfolio-app
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/execution-environment: gen2
+spec:
+  template:
+    metadata:
+      annotations:
+        # Keep at least 1 instance always running to avoid cold starts
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "10"
+        # CPU allocation
+        run.googleapis.com/cpu-throttling: "false"
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 300
+      # Service account will be auto-created by Cloud Run
+      containers:
+      - image: gcr.io/PROJECT_ID/portfolio-app:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: RESEND_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: resend-api-key
+              key: api-key
+        - name: CONTACT_EMAIL
+          value: "connect@shreyaschate.dev"
+        - name: FROM_EMAIL
+          value: "Portfolio Contact <onboarding@resend.dev>"
+        resources:
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+        startupProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 0
+          timeoutSeconds: 240
+          periodSeconds: 240
+          failureThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 3
+          failureThreshold: 1

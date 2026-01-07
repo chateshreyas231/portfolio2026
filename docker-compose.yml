@@ -1,0 +1,146 @@
+version: '3.8'
+
+services:
+  # AI Service
+  ai-service:
+    build:
+      context: .
+      dockerfile: services/ai-service/Dockerfile
+    container_name: ai-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - USE_OLLAMA=${USE_OLLAMA:-false}
+      - OLLAMA_URL=${OLLAMA_URL:-http://localhost:11434}
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Audio Service
+  audio-service:
+    build:
+      context: .
+      dockerfile: services/audio-service/Dockerfile
+    container_name: audio-service
+    ports:
+      - "3002:3002"
+    environment:
+      - PORT=3002
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Profile Service
+  profile-service:
+    build:
+      context: .
+      dockerfile: services/profile-service/Dockerfile
+    container_name: profile-service
+    ports:
+      - "3003:3003"
+    environment:
+      - PORT=3003
+      - FIREBASE_SERVICE_ACCOUNT_KEY=${FIREBASE_SERVICE_ACCOUNT_KEY}
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    container_name: analytics-service
+    ports:
+      - "3004:3004"
+    environment:
+      - PORT=3004
+      - FIREBASE_SERVICE_ACCOUNT_KEY=${FIREBASE_SERVICE_ACCOUNT_KEY}
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Email Service
+  email-service:
+    build:
+      context: .
+      dockerfile: services/email-service/Dockerfile
+    container_name: email-service
+    ports:
+      - "3005:3005"
+    environment:
+      - PORT=3005
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - CONTACT_EMAIL=${CONTACT_EMAIL:-connect@shreyaschate.dev}
+      - FROM_EMAIL=${FROM_EMAIL:-Portfolio Contact <onboarding@resend.dev>}
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend Service (Next.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: portfolio-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_AI_SERVICE_URL=http://ai-service:3001
+      - NEXT_PUBLIC_AUDIO_SERVICE_URL=http://audio-service:3002
+      - NEXT_PUBLIC_PROFILE_SERVICE_URL=http://profile-service:3003
+      - NEXT_PUBLIC_ANALYTICS_SERVICE_URL=http://analytics-service:3004
+      - EMAIL_SERVICE_URL=http://email-service:3005
+      - NEXT_PUBLIC_EMAIL_SERVICE_URL=http://email-service:3005
+      - NODE_ENV=production
+    networks:
+      - portfolio-network
+    depends_on:
+      - ai-service
+      - audio-service
+      - profile-service
+      - analytics-service
+      - email-service
+    restart: unless-stopped
+
+networks:
+  portfolio-network:
+    driver: bridge
+
+volumes:
+  shared-data:
+    driver: local
+
