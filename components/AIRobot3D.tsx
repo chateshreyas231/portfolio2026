@@ -75,12 +75,13 @@ function RobotModel({
       initialViewportHeightRef.current = viewport.height;
     }
     
-    // Scale to fit - use minimum 18% of viewport height (always maintain minimum size)
+    // Scale to fit - ensure minimum 18% of viewport height always
     const minHeight = initialViewportHeightRef.current * 0.18;
-    const naturalHeight = size.y;
-    // Use whichever is larger to ensure minimum 18% screen height
-    const targetHeight = Math.max(minHeight, naturalHeight * 0.5);
-    const scaleFactor = targetHeight / size.y;
+    const scaleForMinHeight = minHeight / size.y;
+    // Calculate natural scale that would fit the model
+    const naturalScale = minHeight / size.y;
+    // Use the larger scale to ensure minimum 18% screen height
+    const scaleFactor = Math.max(scaleForMinHeight, naturalScale);
     scaleFactorRef.current = scaleFactor;
     
     // Position at bottom
