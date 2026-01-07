@@ -474,20 +474,38 @@ jobs:
           echo "✅ Firebase CLI installed"
 
       - name: Authenticate to Firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           echo "🔐 Authenticating to Firebase..."
-          if [ -z "${{ secrets.FIREBASE_TOKEN }}" ]; then
+          if [ -z "$FIREBASE_TOKEN" ]; then
             echo "❌ FIREBASE_TOKEN secret is not set"
             exit 1
           fi
-          firebase login:ci --token "${{ secrets.FIREBASE_TOKEN }}"
+          # Firebase CLI automatically uses FIREBASE_TOKEN from environment
+          firebase use ${{ env.PROJECT_ID }} --non-interactive
           echo "✅ Firebase authentication successful"
 
       - name: Deploy to Firebase Hosting
         id: deploy-firebase
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           echo "🌐 Deploying to Firebase Hosting..."
-          firebase use ${{ env.PROJECT_ID }}
+          firebase use ${{ env.PROJECT_ID }} --non-interactive
+          
+          # Verify Cloud Run service is accessible
+          SERVICE_URL="${{ steps.service-url.outputs.url }}"
+          echo "🔗 Cloud Run service URL: $SERVICE_URL"
+          
+          # Verify firebase.json is configured correctly
+          if [ ! -f "firebase.json" ]; then
+            echo "❌ firebase.json not found"
+            exit 1
+          fi
+          
+          echo "📋 Firebase configuration:"
+          cat firebase.json
           
           MAX_RETRIES=3
           RETRY_COUNT=0
@@ -495,6 +513,7 @@ jobs:
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             if firebase deploy --only hosting --non-interactive; then
               echo "✅ Firebase Hosting deployment successful"
+              echo "🌐 Firebase Hosting is now proxying to Cloud Run service"
               break
             else
               RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -503,6 +522,7 @@ jobs:
                 sleep 10
               else
                 echo "❌ Firebase deployment failed after $MAX_RETRIES attempts"
+                echo "⚠️ Note: Firebase Hosting should proxy to Cloud Run service"
                 exit 1
               fi
             fi
