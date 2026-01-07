@@ -10,7 +10,7 @@ env:
   PROJECT_ID: portfolio2024-b95ee
   REGION: us-central1
   SERVICE_NAME: portfolio-app
-  GCR_REGION: us.gcr.io
+  ARTIFACT_REGISTRY: us-docker.pkg.dev
 
 jobs:
   deploy:
@@ -46,19 +46,32 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
+      - name: Create Artifact Registry repository (if not exists)
         run: |
-          gcloud auth configure-docker ${{ env.GCR_REGION }} --quiet
+          if ! gcloud artifacts repositories describe ${{ env.SERVICE_NAME }} --location=${{ env.REGION }} --project=${{ env.PROJECT_ID }} &>/dev/null; then
+            echo "Creating Artifact Registry repository..."
+            gcloud artifacts repositories create ${{ env.SERVICE_NAME }} \
+              --repository-format=docker \
+              --location=${{ env.REGION }} \
+              --project=${{ env.PROJECT_ID }} \
+              --description="Docker repository for portfolio app"
+          else
+            echo "Artifact Registry repository already exists"
+          fi
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.GCR_REGION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-          docker build -t ${{ env.GCR_REGION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest .
+          docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest .
 
-      - name: Push Docker image to GCR
+      - name: Push Docker image to Artifact Registry
         run: |
-          docker push ${{ env.GCR_REGION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
-          docker push ${{ env.GCR_REGION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:latest
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:latest
 
       - name: Create or update Resend API key secret
         run: |
@@ -90,7 +103,7 @@ jobs:
           
           # Deploy to Cloud Run
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image ${{ env.GCR_REGION }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+            --image ${{ env.ARTIFACT_REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --platform managed \
             --region=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }} \

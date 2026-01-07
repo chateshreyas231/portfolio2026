@@ -29,9 +29,10 @@ You need to add the following secrets to your GitHub repository:
      5. Grant these roles:
         - Cloud Run Admin
         - Service Account User
-        - Storage Admin (for Google Container Registry)
+        - Artifact Registry Writer (for pushing Docker images)
         - Secret Manager Admin
         - Firebase Admin
+        - Artifact Registry Administrator (to create repositories if needed)
      6. Click **Create Key** → **JSON**
      7. Copy the entire JSON content and paste it as the secret value
 
