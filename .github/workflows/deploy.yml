@@ -46,6 +46,7 @@ jobs:
           BUILD_VERSION: ${{ github.run_number }}
           GIT_COMMIT: ${{ github.sha }}
           # Note: OPENAI_API_KEY and GROQ_API_KEY are runtime-only (not needed at build time)
+          # They are only used in API routes at runtime, not during build
         run: |
           echo "🔨 Building Next.js application..."
           echo "📦 Build Info:"
@@ -54,6 +55,13 @@ jobs:
           echo "   Timestamp: $BUILD_TIMESTAMP"
           echo "   Firebase Project: $NEXT_PUBLIC_FIREBASE_PROJECT_ID"
           echo "   Firebase Key: ${NEXT_PUBLIC_FIREBASE_API_KEY:0:20}..." # Show first 20 chars only
+          echo ""
+          echo "📋 Environment variables at build time:"
+          echo "   NEXT_PUBLIC_FIREBASE_PROJECT_ID: ✅ Set"
+          echo "   NEXT_PUBLIC_FIREBASE_API_KEY: ✅ Set"
+          echo "   OPENAI_API_KEY: ⚠️  Runtime only (not needed at build time)"
+          echo "   GROQ_API_KEY: ⚠️  Runtime only (not needed at build time)"
+          echo ""
           npm run build
           echo "✅ Build completed successfully"
 
