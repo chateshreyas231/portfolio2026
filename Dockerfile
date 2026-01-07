@@ -20,6 +20,13 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
+# Build info will be set during CI/CD build
+ARG BUILD_TIMESTAMP
+ARG BUILD_VERSION
+ARG GIT_COMMIT
+ENV BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-unknown}
+ENV BUILD_VERSION=${BUILD_VERSION:-dev}
+ENV GIT_COMMIT=${GIT_COMMIT:-unknown}
 
 # Build the application
 RUN npm run build
