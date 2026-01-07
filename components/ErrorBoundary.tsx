@@ -23,10 +23,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Ignore 404 errors for missing files (likely from browser cache or old builds)
     const is404Error = error.message.includes('404') || 
                        error.message.includes('Not Found') ||
@@ -36,10 +32,13 @@ class ErrorBoundaryClass extends Component<Props, State> {
     if (is404Error) {
       console.warn('Ignoring 404 error (likely cached reference):', error.message);
       // Don't trigger error boundary for 404s - these are likely stale cache issues
-      this.setState({ hasError: false, error: null });
-      return;
+      return { hasError: false, error: null };
     }
     
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to error tracking service in production
     console.error('Error caught by boundary:', error, errorInfo);
     
